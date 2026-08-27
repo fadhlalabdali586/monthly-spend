@@ -1,0 +1,17 @@
+{
+  "name": "لوحة التوزيع",
+  "short_name": "التوزيع",
+  "description": "الميزانية الشهرية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F1A22",
+  "theme_color": "#0F1A22",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
