@@ -252,6 +252,27 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(227,181
 .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none}
 .dot.closed{background:var(--mint)}
 
+/* ---------- bank inbox ---------- */
+.ib-cnt{background:var(--gold);color:#1B1630;border-radius:20px;padding:0 8px;font-size:12px;margin-right:6px;vertical-align:2px}
+.inbox{border-color:rgba(227,181,91,.35);padding:4px 14px}
+.ib-row{padding:13px 0;border-bottom:1px solid var(--line-soft)}
+.ib-row:last-child{border-bottom:none}
+.ib-top{display:flex;align-items:baseline;gap:10px}
+.ib-l{flex:1;min-width:0;font-size:14.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ib-a{font-family:var(--num);font-size:17px;font-weight:600;direction:ltr}
+.ib-a.in{color:var(--mint)}
+.ib-meta{display:flex;align-items:center;gap:8px;margin-top:4px}
+.ib-dup{font-size:10.5px;color:var(--coral);border:1px solid rgba(255,107,94,.45);border-radius:20px;padding:1px 7px}
+.ib-act{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.ib-act select{flex:1;min-width:130px;height:40px;background:var(--surface2);border:1px solid var(--line-soft);color:var(--text);border-radius:var(--r-s);padding:0 10px;font-family:inherit;font-size:15px}
+.ib-act .btn{height:40px}
+.ib-badge{background:var(--gold);color:#1B1630;border-radius:20px;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;text-decoration:none;padding:0 7px}
+.synclog{margin-top:12px;font-size:12.5px;color:var(--muted)}
+.synclog summary{cursor:pointer;padding:6px 0}
+.sl-row{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+.sl-row .sl-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.sl-row b{font-family:var(--num);font-weight:500;color:var(--text)}
+
 /* ---------- misc ---------- */
 .note{font-size:12px;color:var(--muted);line-height:1.8;padding:2px 12px 0 0;margin-top:12px;border-right:2px solid var(--line)}
 .row2{display:flex;gap:8px;margin-top:10px}
@@ -296,7 +317,7 @@ body.priv .sw-row .v,body.priv .auto-amt,body.priv .b-amt,body.priv .b-name smal
 body.priv .gross,body.priv .ticks,body.priv .stats b,body.priv .cbcell .v,body.priv .cbcell .cap,body.priv .brk b,
 body.priv .proxyline b,body.priv .asset input,body.priv .asset .an small,body.priv .net b,body.priv .hist-row .hs,
 body.priv .balance span:last-child,body.priv #box,body.priv .f-in.mono,body.priv #edNote,body.priv .mini,
-body.priv .lg b,body.priv .donut-center b{
+body.priv .lg b,body.priv .donut-center b,body.priv .ib-a,body.priv .sl-row b,body.priv #autoUrl,body.priv #autoKey{
   filter:blur(8px);user-select:none;pointer-events:none;transition:filter .18s ease}
 body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 @media (prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
@@ -311,6 +332,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       <span class="mini" id="miniRemain"></span>
     </div>
     <div class="head-tools">
+      <a href="#inboxSec" class="ib-badge num hide" id="ibBadge" aria-label="عمليات بانتظار التصنيف"></a>
       <select class="month-pick" id="monthPick" aria-label="الشهر"></select>
       <button class="eye" id="eye" type="button" aria-label="إخفاء الأرقام" title="إخفاء الأرقام"></button>
     </div>
@@ -364,6 +386,12 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       <div class="note">«نيابةً عن غيري» لا يُحتسب ضمن سقفك — اضغط «استلمت؟» لما يرجع لك المبلغ. اضغط أي عملية لتعديلها.</div>
       <div class="log" id="log"></div>
     </div>
+  </section>
+
+  <section id="inboxSec" class="hide">
+    <h2 class="sec-title">من البنك — بانتظار التصنيف <span class="ib-cnt num" id="inboxCnt"></span></h2>
+    <div class="card inbox" id="inbox"></div>
+    <div class="row2"><button class="btn sm" id="inboxAll">سجّل الكل بالفئات المقترحة</button></div>
   </section>
 
   <section>
@@ -472,6 +500,19 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     <button class="btn warn full" id="closeMonth">إغلاق الشهر وبدء شهر جديد</button>
     <div class="note">
       عند الإغلاق يُحفظ الشهر كاملاً في السجل، ويُفتح شهر جديد بالثوابت نفسها والأرصدة منقولة، والمصروفات فارغة.
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec-title">الربط التلقائي مع البنك</h2>
+    <div class="card">
+      <div class="f-lbl" style="margin-top:0">رابط الشيت (Web app)</div>
+      <input class="f-in mono" id="autoUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="f-lbl">المفتاح السري</div>
+      <input class="f-in mono" id="autoKey" type="password" placeholder="المفتاح" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <div class="row2"><button class="btn" id="autoSave">حفظ وتجربة</button><button class="btn ghost" id="syncBtn">تحديث الحين</button></div>
+      <div class="note" id="syncStatus"></div>
+      <details class="synclog"><summary>آخر الرسائل اللي وصلت وكيف انفهمت</summary><div id="syncLog"></div></details>
     </div>
   </section>
 
@@ -797,6 +838,7 @@ function fillSelects(){
 }
 
 function render(){
+  initAuto();
   const m=M();
   document.getElementById('monthPick').innerHTML=Object.keys(S.months).sort().reverse()
     .map(k=>`<option value="${k}"${k===S.current?' selected':''}>${monthLabel(k)}${S.months[k].closed?' ✓':''}</option>`).join('');
@@ -980,7 +1022,7 @@ function renderCB(){
     :'<div class="empty" style="grid-column:1/-1">لا كاش باك بعد — سجّل عملياتك على البطاقة الائتمانية.</div>';
   document.getElementById('cbTotal').textContent=n(total);
   const y=total*12;
-  document.getElementById('cbNote').innerHTML=
+  document.getElementById('cbNote').innerHTML=(m.cbReal?`الكاش باك الفعلي من رسائل البنك هذا الشهر: <b class="num" style="color:var(--teal)">${n(m.cbReal)}</b> ريال.<br>`:'')+
     `بهذه الوتيرة: <b class="num" style="color:var(--teal)">${n(y)}</b> ريال سنوياً − <span class="num">${FEE}</span> رسوم = صافي <b class="num" style="color:var(--teal)">${n(y-FEE)}</b> ريال.
      المشتريات بغير البطاقة الائتمانية لا تُحتسب. الوصول للسقف ليس هدفاً — لا تزد إنفاقك لأجل الكاش باك.`;
 }
@@ -1290,7 +1332,204 @@ document.getElementById('eye').addEventListener('click',()=>{
 try{priv=localStorage.getItem(EYE_KEY)==='1'}catch(e){}
 applyPriv();
 
+// ===== SMS parser (auto logging) =====
+const SMS_OWN=/fadhl|فضل|بين حساباتك|own account|حساب\S*\s*بين/i;
+const SMS_FIXED_NAMES=/خديج|العماري/;
+const SMS_WALLETS=/\b(barq|tiqmo|stc ?pay|urpay|d360)\b/i;
+function smsAmount(t){
+  const re=/(?:SAR|SR)\s*:?\s*([\d,]+(?:\.\d+)?)|([\d,]+(?:\.\d+)?)\s*(?:SAR|SR)\b/g;let m,best=null;
+  while((m=re.exec(t))){const v=parseFloat((m[1]||m[2]).replace(/,/g,''));if(!isNaN(v)){best=v;break}}
+  return best;
+}
+function smsSource(t,s){
+  s=String(s||'');
+  if(/rajhi/i.test(s))return'rajhi';if(/barq/i.test(s))return'barq';if(/tiqmo/i.test(s))return'tiqmo';if(/ahli|snb/i.test(s))return'snb';
+  if(/\bSR\s|بـSR|SR\s*\d/.test(t)&&!/SAR/.test(t))return'rajhi';
+  if(/عبر\s*0071|مدى-ابل باي|إيداع:|ايداع:|مبلغ:/.test(t))return'rajhi';
+  if(/لدى\s|إضافة اموال|إضافة أموال|بنك\S*\s*BANK|بطاقة فيزا/.test(t))return'barq';
+  if(/MasterCard|5707|شراء دولي|عملية شراء خارجية/i.test(t))return'tiqmo';
+  if(/مدى-ابل|إئتمانية|ائتمانية|\*0056|\*\*9241|حوالة (صادرة|واردة) داخلية/.test(t))return'snb';
+  return'';
+}
+function smsPay(src,t){
+  if(src==='snb'){if(/9241|إئتمانية|ائتمانية/.test(t))return'credit';if(/0056/.test(t))return'mada';if(/6131/.test(t))return'mada6131';return'transfer'}
+  if(src==='rajhi')return/حوالة/.test(t)?'transfer':'rajhi';
+  if(src==='barq')return'barq';if(src==='tiqmo')return'tiqmo';return'';
+}
+const clean=x=>String(x||'').replace(/\s+/g,' ').replace(/[;*]+$/,'').trim();
+function smsMerchant(t,src){
+  let m;
+  if((m=t.match(/لدى\s+([^\n]+)/)))return clean(m[1]);
+  if(src==='rajhi'&&(m=t.match(/لـ\s*([^\n]+)/))){const v=m[1].includes(';')?m[1].split(';').pop():m[1];if(!/^\d+$/.test(v.trim()))return clean(v)}
+  const lines=t.split(/\n/);
+  for(const l of lines){if((m=l.match(/^\s*من\s*(?!\*)([^\n]+)/))&&!/^\*?\d+$/.test(m[1].trim()))return clean(m[1].split(';').pop())}
+  if((m=t.match(/البطاقة:\s*\*?([A-Z][^\n]+)/)))return clean(m[1]);
+  for(const l of lines){const x=l.trim();if(/^[A-Z][A-Z0-9 .\/&'-]{2,}$/.test(x)&&!/^(IRL|SAR|USD|MC|MASTERCARD)$/i.test(x))return clean(x)}
+  return'';
+}
+function smsPerson(t){
+  let m;
+  if((m=t.match(/;\s*([^\n;]+)/)))return clean(m[1]);
+  if((m=t.match(/الى\s+([^\n]+)/)))return clean(m[1]);
+  if((m=t.match(/(?:^|\n)\s*(?:لـ?|من)\s*\*?\d{3,}\s*([^\n\d][^\n]*)/)))return clean(m[1]);
+  return'';
+}
+function parseSms(t,sender){
+  t=String(t||'').replace(/\r/g,'');const src=smsSource(t,sender),amt=smsAmount(t);
+  const R=(kind,extra)=>Object.assign({kind,src,amt,pay:smsPay(src,t)},extra||{});
+  if(!src)return R('noise',{why:'مو من بنك'});
+  if(/مرفوض|declined|رمز|OTP|كلمة المرور|verification/i.test(t))return R('ignore',{why:'مرفوضة أو رمز'});
+  if(amt==null)return R('unknown',{why:'ما لقيت مبلغ'});
+  if(/سداد بطاقة/.test(t))return R('ignore',{why:'سداد البطاقة'});
+  if(/استرجاع نقدي|كاش ?باك|cashback/i.test(t))return R('cashback');
+  if(/بين حساباتك/.test(t))return R('ignore',{why:'تحويل بين حساباتك'});
+  if(/إضافة (اموال|أموال)|إيداع من آبل/.test(t))return R('ignore',{why:'شحن محفظة'});
+  if(/راتب|الأرباح|أرباح|صراف آلي/.test(t))return R('ignore',{why:'دخل'});
+  if(/قسط تمويل|خصم قسط/.test(t))return R('ignore',{why:'قسط ثابت'});
+  if(/حوال[ةه]/.test(t)){
+    const p=smsPerson(t);
+    if(SMS_OWN.test(p)||SMS_OWN.test(t)&&/الى\s+fadhl/i.test(t))return R('ignore',{why:'تحويل لنفسك',person:p});
+    if(/fadhl|فضل/i.test(p))return R('ignore',{why:'تحويل من نفسك',person:p});
+    if(SMS_FIXED_NAMES.test(p))return R('ignore',{why:'بند ثابت (الوالدة/الجمعية)',person:p});
+    if(/صادر/.test(t))return R('out',{person:p});
+    if(/وارد/.test(t))return R('in',{person:p});
+  }
+  if(/شراء|POS|PoS|مشتريات|purchase/i.test(t)){
+    const mer=smsMerchant(t,src);
+    const selfW=src==='barq'?/tiqmo|stc ?pay|urpay/i:src==='tiqmo'?/\bbarq\b|stc ?pay|urpay/i:SMS_WALLETS;
+    if(SMS_WALLETS.test(mer)||selfW.test(t))return R('ignore',{why:'شحن محفظة ('+mer+')',merchant:mer});
+    return R('expense',{merchant:mer||'عملية شراء'});
+  }
+  return R('unknown',{why:'صيغة جديدة'});
+}
+
+// ===== Auto logging from bank SMS (via Google Sheet) =====
+function initAuto(){
+  S.auto=Object.assign({url:'',key:'',since:0,seen:[],pending:[],log:[],merch:{}},S.auto||{});
+  const ens=(id,name)=>{if(!S.pays.some(p=>p.id===id))S.pays.push({id,name,cb:false})};
+  ens('transfer','تحويل');ens('rajhi','مدى الراجحي');ens('tiqmo','تيقمو');
+  if(!S.pays.some(p=>p.id==='barq'||p.name==='برق'))S.pays.push({id:'barq',name:'برق',cb:false});
+}
+const GUESS=[
+  [/naft|petro|sasco|aldrees|الدريس|ساسكو|محطة|بنزين|fuel/i,'fuel'],
+  [/anthropic|claude|apple\.com|mobily|\bstc\b|zain|netflix|shahid|spotify|google|icloud|سوا/i,'bills'],
+  [/hunger|jahez|mrsool|keeta|toyou|mcdonald|kfc|burger|pizza|shawarma|شاورما|مطعم|restaurant|cafe|coffee|كوفي|bakery|مخبوز|makhbuz|بوفيه|kitchen|taste|juice|jugos|عصير|shesh|kunafa|كنافة|manqush|منقوش/i,'dining'],
+  [/market|mart|grocery|tamimi|danube|panda|othaim|carrefour|lulu|بقالة|تموينات|nanaa|zad |arzaq|supp/i,'grocery'],
+  [/pharma|nahdi|dawaa|صيدلي/i,'pharmacy'],
+  [/wash|غسيل|toll|tire|بنشر|car ?care|\boil\b|زيت/i,'carcare']];
+const hasCat=id=>S.cats.some(c=>c.id===id);
+function guessCat(s){for(const[re,c]of GUESS)if(re.test(s||''))return hasCat(c)?c:'';return''}
+const normKey=s=>String(s||'').toLowerCase().replace(/[\d*#]+/g,'').replace(/\s+/g,' ').trim().slice(0,24);
+function hashStr(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h>>>0)}
+function isoDay(t){const d=t?new Date(t):new Date();const z=x=>String(x).padStart(2,'0');return`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`}
+function payIdFor(p){
+  if(p==='barq'){const b=S.pays.find(x=>x.id==='barq'||x.name==='برق');return b?b.id:'barq'}
+  if(p==='mada6131'&&!S.pays.some(x=>x.id==='mada6131'))S.pays.push({id:'mada6131',name:'مدى 6131',cb:false});
+  return S.pays.some(x=>x.id===p)?p:'transfer';
+}
+function mkPending(id,p,date,text){
+  const label=p.kind==='expense'?p.merchant:p.kind==='out'?'تحويل إلى '+(p.person||'شخص'):p.kind==='in'?'وارد من '+(p.person||'شخص'):'رسالة ما فهمتها';
+  const mkey=p.kind==='expense'?normKey(p.merchant):p.kind==='out'?normKey('>'+p.person):'';
+  const cat=(mkey&&S.auto.merch[mkey]&&hasCat(S.auto.merch[mkey])?S.auto.merch[mkey]:'')||(p.kind==='expense'?guessCat(p.merchant):'');
+  return{id:String(id),date,kind:p.kind,amt:p.amt,pay:payIdFor(p.pay),label,mkey,cat,raw:p.kind==='unknown'?String(text).replace(/\s+/g,' ').slice(0,160):''};
+}
+function setSyncStatus(msg){
+  const el=document.getElementById('syncStatus');if(!el)return;
+  const A=S.auto;
+  el.textContent=msg||(!A.url?'ما تم الربط بعد — أضف الرابط والمفتاح.':A.lastSync?'آخر تحديث: '+shortD(isoDay(A.lastSync))+' — '+new Date(A.lastSync).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'مربوط — بانتظار أول تحديث.');
+}
+let syncing=false,lastSyncTry=0;
+async function syncSms(manual){
+  const A=S.auto;
+  if(!A.url||!A.key){if(manual)toast('أضف رابط الربط والمفتاح أولاً');setSyncStatus();return}
+  if(syncing)return;if(!manual&&Date.now()-lastSyncTry<20000)return;
+  syncing=true;lastSyncTry=Date.now();setSyncStatus('جارٍ التحديث…');
+  const btn=document.getElementById('syncBtn');if(btn)btn.disabled=true;
+  try{
+    const u=A.url.trim()+(A.url.includes('?')?'&':'?')+'k='+encodeURIComponent(A.key.trim())+'&since='+(A.since||0);
+    const j=await(await fetch(u,{cache:'no-store'})).json();
+    if(!j.ok)throw new Error(j.err==='key'?'المفتاح غير صحيح':'رد غير متوقع من الشيت');
+    let added=0,cb=0;
+    for(const row of j.rows||[]){
+      A.since=Math.max(A.since||0,Number(row.id)||0);
+      const h=hashStr(String(row.text));if(A.seen.includes(h))continue;A.seen.push(h);
+      const p=parseSms(row.text,row.from),date=isoDay(row.time);
+      if(p.kind==='noise')continue;
+      A.log.unshift({d:date,k:p.kind,a:p.amt,l:p.merchant||p.person||'',w:p.why||''});
+      if(['expense','out','in','unknown'].includes(p.kind)){A.pending.push(mkPending(row.id,p,date,row.text));added++}
+      else if(p.kind==='cashback'){const m=M();m.cbReal=+((m.cbReal||0)+p.amt).toFixed(2);cb++}
+    }
+    A.seen=A.seen.slice(-600);A.log=A.log.slice(0,40);A.lastSync=Date.now();
+    save();renderInbox();renderSyncLog();if(cb)renderCB();setSyncStatus();
+    if(manual||added)toast(added?`${added} عملية جديدة من البنك`:'ما فيه عمليات جديدة');
+  }catch(e){setSyncStatus('تعذّر التحديث: '+(e.message||'تحقق من الاتصال'));if(manual)toast('تعذّر التحديث')}
+  finally{syncing=false;if(btn)btn.disabled=false}
+}
+const sameAmt=(a,b)=>Math.abs(+a-+b)<0.01;
+function isDup(p){const m=M();return[...m.expenses,...m.fuel].some(e=>e.src!=='sms'&&sameAmt(e.amt,p.amt)&&e.date===p.date)}
+function proxyMatches(p){return M().expenses.filter(e=>!inCap(e.cat)&&!e.got&&sameAmt(e.amt,p.amt))}
+function renderInbox(){
+  const P=S.auto.pending,sec=document.getElementById('inboxSec');
+  sec.classList.toggle('hide',!P.length);
+  document.getElementById('inboxCnt').textContent=P.length||'';
+  const opts=sel=>S.cats.map(c=>`<option value="${c.id}"${c.id===sel?' selected':''}>${escapeHtml(c.name)}</option>`).join('');
+  document.getElementById('inbox').innerHTML=[...P].sort((a,b)=>b.date.localeCompare(a.date)).map(p=>{
+    const meta=`<div class="ib-meta"><span class="log-date">${shortD(p.date)}</span><span class="tag pay">${escapeHtml(payName(p.pay))}</span>${p.kind!=='in'&&isDup(p)?'<span class="ib-dup">يمكن مسجلة يدوياً</span>':''}</div>`;
+    if(p.kind==='in'){
+      const mt=proxyMatches(p);
+      return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a in">+${n(p.amt)}</b></div>${meta}
+        <div class="ib-act">${mt.map(e=>`<button class="btn sm" data-match="${e.id}">✓ رجعت: ${escapeHtml(e.note||catName(e.cat))}</button>`).join('')}<button class="btn ghost sm" data-skip>تم</button></div></div>`;
+    }
+    return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a">${n(p.amt)}</b></div>${meta}
+      ${p.raw?`<div class="log-note" style="white-space:normal">${escapeHtml(p.raw)}</div>`:''}
+      <div class="ib-act"><select data-cat>${p.cat?'':'<option value="">— اختر الفئة —</option>'}${opts(p.cat)}</select>
+      <button class="btn sm" data-ok>سجّل</button><button class="btn ghost sm" data-skip>تجاهل</button></div></div>`;
+  }).join('');
+  document.getElementById('inboxAll').classList.toggle('hide',!P.some(p=>p.kind!=='in'&&p.cat));
+  const mini=document.getElementById('ibBadge');if(mini){mini.textContent=P.length;mini.classList.toggle('hide',!P.length)}
+}
+function renderSyncLog(){
+  const el=document.getElementById('syncLog');if(!el)return;
+  const K={expense:'مصروف',out:'تحويل صادر',in:'وارد',unknown:'غير مفهومة',ignore:'تجاهل',cashback:'كاش باك'};
+  el.innerHTML=S.auto.log.length?S.auto.log.map(x=>`<div class="sl-row"><span class="log-date">${shortD(x.d)}</span><span>${K[x.k]||x.k}</span><span class="sl-l">${escapeHtml(x.l||x.w||'')}</span><b class="num">${x.a!=null?n(x.a):''}</b></div>`).join(''):'<div class="empty">لسا ما وصلت رسائل.</div>';
+}
+function ibRemove(id){S.auto.pending=S.auto.pending.filter(x=>x.id!==id)}
+function ibApprove(id,cat){
+  const p=S.auto.pending.find(x=>x.id===id);if(!p||!cat)return false;
+  const m=M(),nid=Date.now()+''+Math.floor(Math.random()*1000);
+  if(cat==='fuel')m.fuel.push({id:nid,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'});
+  else{const e={id:nid,cat,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'};if(!inCap(cat))e.got=false;m.expenses.push(e)}
+  if(p.mkey)S.auto.merch[p.mkey]=cat;
+  ibRemove(id);return true;
+}
+document.getElementById('inbox').addEventListener('click',e=>{
+  const row=e.target.closest('[data-ib]');if(!row)return;const id=row.dataset.ib;
+  if(e.target.closest('[data-ok]')){
+    const cat=row.querySelector('[data-cat]').value;if(!cat){toast('اختر الفئة أولاً');return}
+    ibApprove(id,cat);save();refreshAll();renderInbox();toast('تم التسجيل');
+  }else if(e.target.closest('[data-skip]')){ibRemove(id);save();renderInbox()}
+  else{const mb=e.target.closest('[data-match]');if(mb){const x=M().expenses.find(z=>z.id===mb.dataset.match);if(x)x.got=true;ibRemove(id);save();refreshAll();renderInbox();toast('تم — رجع المبلغ')}}
+});
+document.getElementById('inbox').addEventListener('change',e=>{
+  const s=e.target.closest('[data-cat]');if(!s)return;const p=S.auto.pending.find(x=>x.id===s.closest('[data-ib]').dataset.ib);if(p){p.cat=s.value;save();renderInbox()}
+});
+document.getElementById('inboxAll').addEventListener('click',()=>{
+  let c=0;[...S.auto.pending].forEach(p=>{if(p.kind!=='in'&&p.cat&&ibApprove(p.id,p.cat))c++});
+  save();refreshAll();renderInbox();toast(`تم تسجيل ${c} عملية`);
+});
+document.getElementById('syncBtn').addEventListener('click',()=>syncSms(true));
+document.getElementById('autoSave').addEventListener('click',()=>{
+  S.auto.url=document.getElementById('autoUrl').value.trim();S.auto.key=document.getElementById('autoKey').value.trim();
+  save();syncSms(true);
+});
+function renderAutoCfg(){
+  document.getElementById('autoUrl').value=S.auto.url||'';document.getElementById('autoKey').value=S.auto.key||'';
+  setSyncStatus();renderSyncLog();
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncSms(false)});
+
 load();
+renderAutoCfg();renderInbox();syncSms(false);
 (()=>{const bar=document.getElementById('topbar'),hero=document.getElementById('ringWrap');
   if('IntersectionObserver' in window){new IntersectionObserver(([e])=>bar.classList.toggle('scrolled',!e.isIntersecting),{rootMargin:'-60px 0px 0px 0px'}).observe(hero)}})();
 
