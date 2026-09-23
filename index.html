@@ -273,6 +273,24 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(227,181
 .sl-row .sl-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 .sl-row b{font-family:var(--num);font-weight:500;color:var(--text)}
 
+/* ---------- loans ---------- */
+.loan-sum{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px;border-bottom:1px solid var(--line-soft)}
+.loan-sum span{font-size:13px;color:var(--muted)}
+.loan-sum b{font-family:var(--num);font-size:26px;font-weight:600;color:var(--lilac)}
+.ln-person{padding:12px 0;border-bottom:1px solid var(--line-soft)}
+.ln-head{display:flex;align-items:baseline;gap:10px}
+.ln-head strong{flex:1;font-size:15px;font-weight:500}
+.ln-head b{font-family:var(--num);font-size:17px;font-weight:600;color:var(--lilac)}
+.ln-item{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.ln-item .ln-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln-item .num{color:var(--text)}
+.ln-item.paid{opacity:.5}
+.ln-item.paid .num{text-decoration:line-through}
+.loan-add{margin-top:12px}
+.loan-add summary{cursor:pointer;color:var(--lilac);font-size:13.5px;padding:6px 0;list-style:none}
+.loan-add summary::-webkit-details-marker{display:none}
+.ln-done summary{cursor:pointer;color:var(--muted);font-size:12.5px;padding:10px 0 2px}
+
 /* ---------- misc ---------- */
 .note{font-size:12px;color:var(--muted);line-height:1.8;padding:2px 12px 0 0;margin-top:12px;border-right:2px solid var(--line)}
 .row2{display:flex;gap:8px;margin-top:10px}
@@ -418,6 +436,27 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       </div>
       <input class="note-in" id="fNote" type="text" placeholder="ملاحظة — المحطة أو عدّاد الكيلومترات (اختياري)">
       <div class="log" id="fLog"></div>
+    </div>
+  </section>
+
+  <section id="loanSec">
+    <h2 class="sec-title">السلف</h2>
+    <div class="card loans">
+      <div class="loan-sum"><span>لك عند الناس</span><b class="num" id="loanTotal">0</b></div>
+      <div id="loanList"></div>
+      <details class="loan-add" id="loanAdd">
+        <summary>＋ سلفة جديدة</summary>
+        <div class="entry">
+          <input id="lnWho" type="text" placeholder="لمين؟" style="font-family:inherit;direction:rtl;text-align:right">
+          <input id="lnAmt" type="number" inputmode="decimal" placeholder="المبلغ">
+        </div>
+        <div class="entry sub">
+          <input id="lnDate" type="date">
+          <input id="lnNote" type="text" placeholder="ملاحظة (اختياري)" style="font-family:inherit;direction:rtl;text-align:right">
+        </div>
+        <button class="btn full" id="lnAdd" type="button">إضافة السلفة</button>
+      </details>
+      <div class="note">السلف ما تنحسب على سقفك، وتبقى محفوظة بين الشهور لين ترجع. تحويل من البنك تقدر تسجله «سلفة» من قسم «من البنك»، ولما يرجع لك المبلغ يطلع لك زر السداد.</div>
     </div>
   </section>
 
@@ -1070,7 +1109,7 @@ function refreshFlow(){
   if(sa&&sv)sa.textContent=n(sv.amount);
   drawBalance();renderSweep();
 }
-function refreshAll(){renderCap();renderFuel();renderCB();renderHist();renderSweep()}
+function refreshAll(){renderCap();renderFuel();renderCB();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans()}
 
 document.getElementById('salary').addEventListener('input',e=>{M().salary=+e.target.value||0;save();refreshFlow()});
 document.getElementById('bus').addEventListener('input',e=>{
@@ -1405,6 +1444,7 @@ function parseSms(t,sender){
 
 // ===== Auto logging from bank SMS (via Google Sheet) =====
 function initAuto(){
+  if(!Array.isArray(S.loans))S.loans=[];
   S.auto=Object.assign({url:'',key:'',since:0,seen:[],pending:[],log:[],merch:{}},S.auto||{});
   const ens=(id,name)=>{if(!S.pays.some(p=>p.id===id))S.pays.push({id,name,cb:false})};
   ens('transfer','تحويل');ens('rajhi','مدى الراجحي');ens('tiqmo','تيقمو');
@@ -1430,8 +1470,8 @@ function payIdFor(p){
 function mkPending(id,p,date,text){
   const label=p.kind==='expense'?p.merchant:p.kind==='out'?'تحويل إلى '+(p.person||'شخص'):p.kind==='in'?'وارد من '+(p.person||'شخص'):'رسالة ما فهمتها';
   const mkey=p.kind==='expense'?normKey(p.merchant):p.kind==='out'?normKey('>'+p.person):'';
-  const cat=(mkey&&S.auto.merch[mkey]&&hasCat(S.auto.merch[mkey])?S.auto.merch[mkey]:'')||(p.kind==='expense'?guessCat(p.merchant):'');
-  return{id:String(id),date,kind:p.kind,amt:p.amt,pay:payIdFor(p.pay),label,mkey,cat,raw:p.kind==='unknown'?String(text).replace(/\s+/g,' ').slice(0,160):''};
+  const mem=mkey&&S.auto.merch[mkey];const cat=(mem&&(hasCat(mem)||mem==='__loan')?mem:'')||(p.kind==='expense'?guessCat(p.merchant):'');
+  return{id:String(id),date,kind:p.kind,amt:p.amt,pay:payIdFor(p.pay),label,person:p.person||'',mkey,cat,raw:p.kind==='unknown'?String(text).replace(/\s+/g,' ').slice(0,160):''};
 }
 function setSyncStatus(msg){
   const el=document.getElementById('syncStatus');if(!el)return;
@@ -1478,11 +1518,11 @@ function renderInbox(){
     if(p.kind==='in'){
       const mt=proxyMatches(p);
       return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a in">+${n(p.amt)}</b></div>${meta}
-        <div class="ib-act">${mt.map(e=>`<button class="btn sm" data-match="${e.id}">✓ رجعت: ${escapeHtml(e.note||catName(e.cat))}</button>`).join('')}<button class="btn ghost sm" data-skip>تم</button></div></div>`;
+        <div class="ib-act">${loanMatches(p).map(l=>`<button class="btn sm" data-lnmatch="${l.id}">✓ سداد سلفة: ${escapeHtml(l.person)} (${n(lnRemain(l))})</button>`).join('')}${mt.map(e=>`<button class="btn sm" data-match="${e.id}">✓ رجعت: ${escapeHtml(e.note||catName(e.cat))}</button>`).join('')}<button class="btn ghost sm" data-skip>تم</button></div></div>`;
     }
     return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a">${n(p.amt)}</b></div>${meta}
       ${p.raw?`<div class="log-note" style="white-space:normal">${escapeHtml(p.raw)}</div>`:''}
-      <div class="ib-act"><select data-cat>${p.cat?'':'<option value="">— اختر الفئة —</option>'}${opts(p.cat)}</select>
+      <div class="ib-act"><select data-cat>${p.cat?'':'<option value="">— اختر الفئة —</option>'}${opts(p.cat)}${p.kind==='out'?`<option value="__loan"${p.cat==='__loan'?' selected':''}>سلفة (تنحفظ في السلف)</option>`:''}</select>
       <button class="btn sm" data-ok>سجّل</button><button class="btn ghost sm" data-skip>تجاهل</button></div></div>`;
   }).join('');
   document.getElementById('inboxAll').classList.toggle('hide',!P.some(p=>p.kind!=='in'&&p.cat));
@@ -1496,6 +1536,7 @@ function renderSyncLog(){
 function ibRemove(id){S.auto.pending=S.auto.pending.filter(x=>x.id!==id)}
 function ibApprove(id,cat){
   const p=S.auto.pending.find(x=>x.id===id);if(!p||!cat)return false;
+  if(cat==='__loan'){addLoan(p.person||p.label.replace(/^تحويل إلى\s*/,''),p.amt,p.date,'','sms');if(p.mkey)S.auto.merch[p.mkey]='__loan';ibRemove(id);return true}
   const m=M(),nid=Date.now()+''+Math.floor(Math.random()*1000);
   if(cat==='fuel')m.fuel.push({id:nid,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'});
   else{const e={id:nid,cat,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'};if(!inCap(cat))e.got=false;m.expenses.push(e)}
@@ -1508,6 +1549,7 @@ document.getElementById('inbox').addEventListener('click',e=>{
     const cat=row.querySelector('[data-cat]').value;if(!cat){toast('اختر الفئة أولاً');return}
     ibApprove(id,cat);save();refreshAll();renderInbox();toast('تم التسجيل');
   }else if(e.target.closest('[data-skip]')){ibRemove(id);save();renderInbox()}
+  else if(e.target.closest('[data-lnmatch]')){const p=S.auto.pending.find(x=>x.id===id);const a=payLoan(e.target.closest('[data-lnmatch]').dataset.lnmatch,p.amt,p.date);ibRemove(id);save();refreshAll();renderInbox();toast(a?'انسجل سداد السلفة':'تم')}
   else{const mb=e.target.closest('[data-match]');if(mb){const x=M().expenses.find(z=>z.id===mb.dataset.match);if(x)x.got=true;ibRemove(id);save();refreshAll();renderInbox();toast('تم — رجع المبلغ')}}
 });
 document.getElementById('inbox').addEventListener('change',e=>{
@@ -1528,8 +1570,45 @@ function renderAutoCfg(){
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncSms(false)});
 
+
+// ===== Loans (across months) =====
+const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
+const nameKey=s=>String(s||'').replace(/^(ال)/,'').replace(/\s+/g,' ').trim().toLowerCase();
+function sameName(a,b){const A=nameKey(a).split(' ')[0],B=nameKey(b).split(' ')[0];return A&&B&&(A===B||nameKey(a).includes(A)&&nameKey(b).includes(A)||nameKey(b).includes(B)&&nameKey(a).includes(B))}
+function addLoan(person,amt,date,note,src){S.loans.push({id:Date.now()+''+Math.floor(Math.random()*1000),person:person||'شخص',amt:+amt,date:date||isoDay(),note:note||'',paid:[],src:src||''})}
+function payLoan(id,amt,date){const l=S.loans.find(x=>x.id===id);if(!l)return 0;const a=Math.min(+amt,lnRemain(l));if(a>0)l.paid.push({amt:+a.toFixed(2),date:date||isoDay()});return a}
+function loanMatches(p){return S.loans.filter(l=>lnRemain(l)>0&&(sameName(l.person,p.person)||sameAmt(lnRemain(l),p.amt)))}
+function renderLoans(){
+  if(!Array.isArray(S.loans))S.loans=[];
+  const open=S.loans.filter(l=>lnRemain(l)>0),done=S.loans.filter(l=>lnRemain(l)<=0);
+  document.getElementById('loanTotal').textContent=n(open.reduce((s,l)=>s+lnRemain(l),0));
+  const groups={};open.forEach(l=>{const k=nameKey(l.person).split(' ')[0]||l.person;(groups[k]=groups[k]||{name:l.person,items:[]}).items.push(l)});
+  const item=l=>{const r=lnRemain(l),part=r<l.amt&&r>0;
+    return`<div class="ln-item${r<=0?' paid':''}"><span class="log-date">${shortD(l.date)}</span><span class="ln-n">${escapeHtml(l.note||'سلفة')}${part?` <small>(باقي <span class="num">${n(r)}</span>)</small>`:''}</span><span class="num">${n(l.amt)}</span>
+      ${r>0?`<button class="gotbtn" data-lnpay="${l.id}">سدّد</button>`:''}<button class="del" data-lndel="${l.id}" aria-label="حذف">×</button></div>`};
+  document.getElementById('loanList').innerHTML=
+    (Object.values(groups).map(g=>`<div class="ln-person"><div class="ln-head"><strong>${escapeHtml(g.name)}</strong><b class="num">${n(g.items.reduce((s,l)=>s+lnRemain(l),0))}</b></div>${g.items.map(item).join('')}</div>`).join('')
+     ||'<div class="empty" style="padding:14px 0 4px">ما عليك سلف لأحد حالياً.</div>')
+    +(done.length?`<details class="ln-done"><summary>السلف المسددة (${done.length})</summary>${done.slice(-20).reverse().map(item).join('')}</details>`:'');
+  const d=document.getElementById('lnDate');if(!d.value)d.value=isoDay();
+}
+document.getElementById('lnAdd').addEventListener('click',()=>{
+  const who=document.getElementById('lnWho').value.trim(),amt=+document.getElementById('lnAmt').value;
+  if(!who){toast('اكتب اسم الشخص');return}if(!amt||amt<=0){toast('أدخل مبلغ صحيح');return}
+  addLoan(who,amt,document.getElementById('lnDate').value,document.getElementById('lnNote').value.trim(),'manual');
+  ['lnWho','lnAmt','lnNote'].forEach(id=>document.getElementById(id).value='');document.getElementById('loanAdd').open=false;
+  save();renderLoans();toast('انحفظت السلفة');
+});
+document.getElementById('loanList').addEventListener('click',async e=>{
+  const pb=e.target.closest('[data-lnpay]'),db=e.target.closest('[data-lndel]');
+  if(pb){const l=S.loans.find(x=>x.id===pb.dataset.lnpay);if(!l)return;
+    const v=prompt(`كم رجع لك من ${l.person}؟`,String(lnRemain(l)));if(v===null)return;const a=+v;if(!a||a<=0){toast('مبلغ غير صحيح');return}
+    payLoan(l.id,a);save();renderLoans();toast(lnRemain(l)<=0?'تسددت السلفة كاملة':'انسجل السداد');}
+  else if(db){if(!await ask('حذف هذي السلفة نهائياً؟'))return;S.loans=S.loans.filter(x=>x.id!==db.dataset.lndel);save();renderLoans()}
+});
+
 load();
-renderAutoCfg();renderInbox();syncSms(false);
+renderAutoCfg();renderLoans();renderInbox();syncSms(false);
 (()=>{const bar=document.getElementById('topbar'),hero=document.getElementById('ringWrap');
   if('IntersectionObserver' in window){new IntersectionObserver(([e])=>bar.classList.toggle('scrolled',!e.isIntersecting),{rootMargin:'-60px 0px 0px 0px'}).observe(hero)}})();
 
