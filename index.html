@@ -10,8 +10,8 @@
 <meta name="theme-color" content="#10152E">
 <link rel="manifest" href="manifest.json">
 <title>لوحة التوزيع — الميزانية الشهرية</title>
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon-180.png?v=2">
+<link rel="icon" href="icon.png?v=2">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@300;400;500;600;700&display=swap');
 
@@ -886,7 +886,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 <script>
 const KEY='fadhl_budget_v2';
 const LINE_COLORS={car:'#7C8CF8',ball:'#4FD1A5',mom:'#E08FC4',card:'#E3B55B',jam:'#B9C76A',save:'#2FA88A',zamala:'#6FB7D9',fuel:'#F2D08A'};
-const CAT_COLORS={dining:'#FF8A5B',fuel:'#E3B55B',bills:'#7C8CF8',grocery:'#4FD1A5',other:'#B59CFF',carcare:'#6FB7D9',
+const CAT_COLORS={dining:'#FF8A5B',coffee:'#C98B5E',fuel:'#E3B55B',bills:'#7C8CF8',grocery:'#4FD1A5',other:'#B59CFF',carcare:'#6FB7D9',
   pharmacy:'#F07AA8',transport:'#C9D66B',clothes:'#F5A3C7',gift:'#FFD27A',proxy:'#A794FF'};
 const XTRA=['#5EC8E5','#F2A65A','#9BE38A','#E77FD1','#D9C36A','#7FA8FF'];
 const lineColor=l=>LINE_COLORS[l.id]||l.color;
@@ -1116,10 +1116,12 @@ function cashback(list){
     if(!payHasCb(e.pay))return;
     raw[e.cat]=(raw[e.cat]||0)+e.amt*rateOf(e)/100;
   });
+  // فئات تتشارك سقف كاش باك واحد (مثل المطاعم والمقاهي عند البنك)
+  const grp={};S.cats.forEach(c=>{const g=c.cbGroup||c.id;(grp[g]=grp[g]||{raw:0,cap:0}).raw+=raw[c.id]||0;if(!c.cbGroup)grp[g].cap=+c.cbCap||0});
   S.cats.forEach(c=>{
-    const r=raw[c.id]||0,cap=+c.cbCap||0;
-    const earned=cap>0?Math.min(r,cap):r;
-    out[c.id]={earned,raw:r,hit:cap>0&&r>cap};
+    const g=grp[c.cbGroup||c.id],r=raw[c.id]||0,cap=g.cap||+c.cbCap||0;
+    const f=cap>0&&g.raw>cap?cap/g.raw:1,earned=r*f;
+    out[c.id]={earned,raw:r,hit:cap>0&&g.raw>cap};
     total+=earned;
   });
   return{out,total};
@@ -1727,6 +1729,9 @@ function parseSms(t,sender){
 // ===== Auto logging from bank SMS (via Google Sheet) =====
 function initAuto(){
   if(!Array.isArray(S.loans))S.loans=[];
+  if(!S.cats.some(c=>c.id==='coffee')){const i=S.cats.findIndex(c=>c.id==='dining'),d=S.cats[i]||{cb:5,cbCap:200};
+    S.cats.splice(i>=0?i+1:0,0,{id:'coffee',name:'مقاهي وقهوة',cb:d.cb,cbCap:d.cbCap,inCap:true,cbGroup:'dining'});
+    if(i>=0&&S.cats[i].name==='مطاعم ومقاهي')S.cats[i].name='مطاعم';}
   initGoals();initGold();if(!Array.isArray(S.obl))initObl();
   S.auto=Object.assign({url:'',key:'',since:0,seen:[],pending:[],log:[],merch:{}},S.auto||{});
   const ens=(id,name)=>{if(!S.pays.some(p=>p.id===id))S.pays.push({id,name,cb:false})};
@@ -1734,9 +1739,10 @@ function initAuto(){
   if(!S.pays.some(p=>p.id==='barq'||p.name==='برق'))S.pays.push({id:'barq',name:'برق',cb:false});
 }
 const GUESS=[
-  [/naft|petro|sasco|aldrees|الدريس|ساسكو|محطة|بنزين|fuel/i,'fuel'],
+  [/naft|نفط|sasco|ساسكو|aldrees|al drees|الدريس|petromin|بترومين|wafi|وافي|\bshell\b|adnoc|ادنوك|\benoc\b|\bmobil\b|\besso\b|sahel|ساهل|almaha|المها|petrol|بترول|fuel|وقود|محروقات|gas station|محطة|محطات|بنزين|tas-heel|tasheel|al ?bassami|البسامي|muhaidib|المهيدب/i,'fuel'],
   [/anthropic|claude|apple\.com|mobily|\bstc\b|zain|netflix|shahid|spotify|google|icloud|سوا/i,'bills'],
-  [/hunger|jahez|mrsool|keeta|toyou|mcdonald|kfc|burger|pizza|shawarma|شاورما|مطعم|restaurant|cafe|coffee|كوفي|bakery|مخبوز|makhbuz|بوفيه|kitchen|taste|juice|jugos|عصير|shesh|kunafa|كنافة|manqush|منقوش/i,'dining'],
+  [/coffee|caf[eé]|كوفي|قهوة|كافيه|starbucks|ستاربكس|dunkin|دانكن|tim hortons|هورتنز|barn'?s|بارنز|half million|هاف مليون|\bdose\b|brew|espresso|latte|daily cup|arabica|ارابيكا|khawlan|خولان|roast|محمصة|drip|overdose|kyan|كيان/i,'coffee'],
+  [/hunger|jahez|mrsool|keeta|toyou|mcdonald|kfc|burger|pizza|shawarma|شاورما|مطعم|restaurant|bakery|مخبوز|makhbuz|بوفيه|kitchen|taste|juice|jugos|عصير|shesh|kunafa|كنافة|manqush|منقوش/i,'dining'],
   [/market|mart|grocery|tamimi|danube|panda|othaim|carrefour|lulu|بقالة|تموينات|nanaa|zad |arzaq|supp/i,'grocery'],
   [/pharma|nahdi|dawaa|صيدلي/i,'pharmacy'],
   [/wash|غسيل|toll|tire|بنشر|car ?care|\boil\b|زيت/i,'carcare']];
