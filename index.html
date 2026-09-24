@@ -634,6 +634,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
           <input id="lnDate" type="date">
           <input id="lnNote" type="text" placeholder="ملاحظة (اختياري)" style="font-family:inherit;direction:rtl;text-align:right">
         </div>
+        <label class="chk" style="display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px"><input type="checkbox" id="lnSav" checked>من الادخار — ينخصم من حساب الادخار ويرجع له عند السداد</label>
         <button class="btn full" id="lnAdd" type="button">إضافة السلفة</button>
       </details>
       <div class="note">السلف ما تنحسب على سقفك، وتبقى محفوظة بين الشهور لين ترجع. تحويل من البنك تقدر تسجله «سلفة» من قسم «من البنك»، ولما يرجع لك المبلغ يطلع لك زر السداد.</div>
@@ -1083,6 +1084,7 @@ function migrate(){
   save();
 }
 function ensureFromSave(){
+  (S.loans||[]).forEach(l=>{if(!('sav' in l))l.sav=false});
   if(!Array.isArray(S.cats))return;
   const f=S.cats.find(c=>c.id==='fromsave');
   if(f){if(!('asset' in f)){f.asset='sav';save()}return}
@@ -1100,6 +1102,13 @@ function reconcileAssets(){
   Object.keys(led).forEach(k=>{const o=led[k],w=want[k];if(!w||w.a!==o.a||w.v!==o.v)adj(o.a,o.v)});
   Object.keys(want).forEach(k=>{const o=led[k],w=want[k];if(!o||w.a!==o.a||w.v!==o.v)adj(w.a,-w.v)});
   m.aLedger=want;
+  // السلف من الادخار: المتبقي منها مخصوم من حساب الادخار، ويرجع تلقائياً مع السداد
+  const sv=m.assets.find(a=>a.id==='sav');if(!sv||!Array.isArray(S.loans))return;
+  const L=S.lnLedger||(S.lnLedger={}),ids={};
+  S.loans.forEach(l=>{if(!l.sav)return;ids[l.id]=1;
+    const w=Math.max(0,lnRemain(l)),had=+L[l.id]||0;
+    if(w!==had){sv.val=r2((+sv.val||0)-(w-had));L[l.id]=w}});
+  Object.keys(L).forEach(k=>{if(!ids[k])delete L[k]});
 }
 function save(){
   try{reconcileAssets()}catch(e){}
@@ -1111,21 +1120,22 @@ function save(){
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2000)}
 
-function ask(msg){
+function ask(msg,yesL,noL){
   return new Promise(res=>{
-    const mask=document.getElementById('mask');
+    const mask=document.getElementById('mask'),Y=document.getElementById('askYes'),N=document.getElementById('askNo');
+    const y0=Y.textContent,n0=N.textContent;if(yesL)Y.textContent=yesL;if(noL)N.textContent=noL;
     document.getElementById('askMsg').textContent=msg;
     mask.classList.add('on');
     const done=v=>{
       mask.classList.remove('on');
       document.getElementById('askYes').onclick=null;
       document.getElementById('askNo').onclick=null;
-      mask.onclick=null;
+      mask.onclick=null;Y.textContent=y0;N.textContent=n0;
       res(v);
     };
     document.getElementById('askYes').onclick=()=>done(true);
     document.getElementById('askNo').onclick=()=>done(false);
-    mask.onclick=e=>{if(e.target===mask)done(false)};
+    mask.onclick=e=>{if(e.target===mask)done(yesL?null:false)};
   });
 }
 
@@ -1410,7 +1420,7 @@ function refreshFlow(){
   if(sa&&sv)sa.textContent=n(sv.amount);
   drawBalance();renderSweep();
 }
-function refreshAll(){renderCap();renderFuel();renderCB();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans();if(typeof renderGoals==='function')renderGoals();if(typeof renderPhase2==='function')renderPhase2()}
+function refreshAll(){renderCap();renderFuel();renderCB();if(typeof renderAssets==='function')renderAssets();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans();if(typeof renderGoals==='function')renderGoals();if(typeof renderPhase2==='function')renderPhase2()}
 
 document.getElementById('salary').addEventListener('input',e=>{M().salary=+e.target.value||0;save();refreshFlow()});
 document.getElementById('bus').addEventListener('input',e=>{
@@ -2298,7 +2308,7 @@ document.getElementById('healthRun').addEventListener('click',runHealth);
 const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
 const nameKey=s=>String(s||'').replace(/^(ال)/,'').replace(/\s+/g,' ').trim().toLowerCase();
 function sameName(a,b){const A=nameKey(a).split(' ')[0],B=nameKey(b).split(' ')[0];return A&&B&&(A===B||nameKey(a).includes(A)&&nameKey(b).includes(A)||nameKey(b).includes(B)&&nameKey(a).includes(B))}
-function addLoan(person,amt,date,note,src){S.loans.push({id:Date.now()+''+Math.floor(Math.random()*1000),person:person||'شخص',amt:+amt,date:date||isoDay(),note:note||'',paid:[],src:src||''})}
+function addLoan(person,amt,date,note,src,sav){S.loans.push({id:Date.now()+''+Math.floor(Math.random()*1000),person:person||'شخص',amt:+amt,date:date||isoDay(),note:note||'',paid:[],src:src||'',sav:sav!==false})}
 function payLoan(id,amt,date){const l=S.loans.find(x=>x.id===id);if(!l)return 0;const a=Math.min(+amt,lnRemain(l));if(a>0)l.paid.push({amt:+a.toFixed(2),date:date||isoDay()});return a}
 function loanMatches(p){return S.loans.filter(l=>lnRemain(l)>0&&(sameName(l.person,p.person)||sameAmt(lnRemain(l),p.amt)))}
 function renderLoans(){
@@ -2308,7 +2318,7 @@ function renderLoans(){
   const groups={};open.forEach(l=>{const k=nameKey(l.person).split(' ')[0]||l.person;(groups[k]=groups[k]||{name:l.person,items:[]}).items.push(l)});
   const item=l=>{const r=lnRemain(l),part=r<l.amt&&r>0;
     return`<div class="ln-item${r<=0?' paid':''}"><span class="log-date">${shortD(l.date)}</span><span class="ln-n">${escapeHtml(l.note||'سلفة')}${part?` <small>(باقي <span class="num">${n(r)}</span>)</small>`:''}</span><span class="num">${n(l.amt)}</span>
-      ${r>0?`<button class="gotbtn" data-lnpay="${l.id}">سدّد</button>`:''}<button class="del" data-lndel="${l.id}" aria-label="حذف">×</button></div>`};
+      ${r>0?`<button class="gotbtn" data-lnsav="${l.id}" style="opacity:${l.sav?1:.55}">${l.sav?'ادخار ✓':'ادخار؟'}</button><button class="gotbtn" data-lnpay="${l.id}">سدّد</button>`:''}<button class="del" data-lndel="${l.id}" aria-label="حذف">×</button></div>`};
   document.getElementById('loanList').innerHTML=
     (Object.values(groups).map(g=>`<div class="ln-person"><div class="ln-head"><strong>${escapeHtml(g.name)}</strong><b class="num">${n(g.items.reduce((s,l)=>s+lnRemain(l),0))}</b></div>${g.items.map(item).join('')}</div>`).join('')
      ||'<div class="empty" style="padding:14px 0 4px">ما عليك سلف لأحد حالياً.</div>')
@@ -2318,15 +2328,22 @@ function renderLoans(){
 document.getElementById('lnAdd').addEventListener('click',()=>{
   const who=document.getElementById('lnWho').value.trim(),amt=+document.getElementById('lnAmt').value;
   if(!who){toast('اكتب اسم الشخص');return}if(!amt||amt<=0){toast('أدخل مبلغ صحيح');return}
-  addLoan(who,amt,document.getElementById('lnDate').value,document.getElementById('lnNote').value.trim(),'manual');
+  addLoan(who,amt,document.getElementById('lnDate').value,document.getElementById('lnNote').value.trim(),'manual',document.getElementById('lnSav').checked);
   ['lnWho','lnAmt','lnNote'].forEach(id=>document.getElementById(id).value='');document.getElementById('loanAdd').open=false;
-  save();renderLoans();toast('انحفظت السلفة');
+  save();renderLoans();refreshAll();toast('انحفظت السلفة');
 });
 document.getElementById('loanList').addEventListener('click',async e=>{
-  const pb=e.target.closest('[data-lnpay]'),db=e.target.closest('[data-lndel]');
+  const pb=e.target.closest('[data-lnpay]'),db=e.target.closest('[data-lndel]'),sb=e.target.closest('[data-lnsav]');
+  if(sb){const l=S.loans.find(x=>x.id===sb.dataset.lnsav);if(!l)return;
+    S.lnLedger=S.lnLedger||{};
+    if(l.sav){l.sav=false;delete S.lnLedger[l.id];save();renderLoans();refreshAll();toast('انفصلت السلفة عن حساب الادخار');return}
+    const pre=await ask(`ربط سلفة ${l.person} (${n(lnRemain(l))}) بحساب الادخار — هل المبلغ منخصم أصلاً من رقم الادخار في اللوحة؟`,'نعم، منخصم','لا، اخصمه الحين');
+    if(pre===null)return;
+    l.sav=true;if(pre)S.lnLedger[l.id]=Math.max(0,lnRemain(l));
+    save();renderLoans();refreshAll();toast('انربطت السلفة بحساب الادخار');return}
   if(pb){const l=S.loans.find(x=>x.id===pb.dataset.lnpay);if(!l)return;
     const v=prompt(`كم رجع لك من ${l.person}؟`,String(lnRemain(l)));if(v===null)return;const a=+v;if(!a||a<=0){toast('مبلغ غير صحيح');return}
-    payLoan(l.id,a);save();renderLoans();toast(lnRemain(l)<=0?'تسددت السلفة كاملة':'انسجل السداد');}
+    payLoan(l.id,a);save();renderLoans();refreshAll();toast(lnRemain(l)<=0?'تسددت السلفة كاملة':'انسجل السداد');}
   else if(db){if(!await ask('حذف هذي السلفة نهائياً؟'))return;S.loans=S.loans.filter(x=>x.id!==db.dataset.lndel);save();renderLoans()}
 });
 
