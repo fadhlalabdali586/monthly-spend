@@ -1,4 +1,4 @@
-const CACHE = 'tawzee-v1';
+const CACHE = 'tawzee-v2';
 const CORE = ['./', './index.html', './manifest.json', './icon.png', './icon-180.png'];
 
 self.addEventListener('install', e => {
