@@ -32,7 +32,7 @@ body{
   background:var(--bg);color:var(--text);
   font-family:'IBM Plex Sans Arabic',-apple-system,BlinkMacSystemFont,sans-serif;
   font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
-  padding:0 0 calc(80px + env(safe-area-inset-bottom));
+  padding:0 0 calc(96px + env(safe-area-inset-bottom));
 }
 .num{font-family:var(--num);font-variant-numeric:tabular-nums;font-feature-settings:"tnum";direction:ltr;display:inline-block;unicode-bidi:embed}
 .wrap{max-width:560px;margin:0 auto;padding:0 16px}
@@ -291,6 +291,39 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(227,181
 .loan-add summary::-webkit-details-marker{display:none}
 .ln-done summary{cursor:pointer;color:var(--muted);font-size:12.5px;padding:10px 0 2px}
 
+/* ---------- tabs ---------- */
+.tab-off{display:none!important}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;
+  background:rgba(14,19,42,.92);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);
+  border-top:1px solid var(--line-soft);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{position:relative;flex:1;max-width:120px;background:none;border:none;color:var(--faint);font-family:inherit;
+  font-size:11px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;transition:color .2s}
+.tabbar button svg{width:23px;height:23px}
+.tabbar button.on{color:var(--gold)}
+.tb-badge{position:absolute;top:2px;left:calc(50% - 22px);min-width:17px;height:17px;border-radius:9px;background:var(--coral);
+  color:#fff;font-style:normal;font-size:10px;font-family:var(--num);display:flex;align-items:center;justify-content:center;padding:0 4px}
+.manual-toggle{margin-top:18px;height:44px;font-size:14px}
+#manualBox .entry:first-child{margin-top:14px}
+
+/* ---------- goals ---------- */
+.goal{border-radius:var(--r-m);margin-bottom:10px;cursor:pointer;padding:15px 14px}
+.goal:active{border-color:var(--gold)}
+.g-top{display:flex;align-items:baseline;gap:10px}
+.g-top strong{flex:1;font-size:15.5px;font-weight:600;font-family:var(--num)}
+.g-pct{font-family:var(--num);font-size:15px;font-weight:600;color:var(--gold)}
+.goal.done .g-pct{color:var(--mint)}
+.g-bar{height:8px;background:var(--surface2);border-radius:5px;margin:10px 0 8px;overflow:hidden}
+.g-bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--gold),#F2D08A);transition:width .8s cubic-bezier(.22,1,.36,1)}
+.goal.done .g-bar i{background:var(--mint)}
+.g-nums{font-size:12.5px;color:var(--muted)}
+.g-nums .num{color:var(--text);font-weight:500}
+.g-eta{font-size:12.5px;margin-top:8px;line-height:1.7;color:var(--muted)}
+.g-eta b{color:var(--text);font-weight:500}
+.g-eta .ok{color:var(--mint)}.g-eta .warn{color:var(--coral)}
+.gold-in{display:flex;align-items:center;gap:6px}
+.gold-in span{font-size:12px;color:var(--muted)}
+.asset .an .gv{display:block;margin-top:2px;color:var(--text);font-size:12.5px}
+
 /* ---------- misc ---------- */
 .note{font-size:12px;color:var(--muted);line-height:1.8;padding:2px 12px 0 0;margin-top:12px;border-right:2px solid var(--line)}
 .row2{display:flex;gap:8px;margin-top:10px}
@@ -335,7 +368,7 @@ body.priv .sw-row .v,body.priv .auto-amt,body.priv .b-amt,body.priv .b-name smal
 body.priv .gross,body.priv .ticks,body.priv .stats b,body.priv .cbcell .v,body.priv .cbcell .cap,body.priv .brk b,
 body.priv .proxyline b,body.priv .asset input,body.priv .asset .an small,body.priv .net b,body.priv .hist-row .hs,
 body.priv .balance span:last-child,body.priv #box,body.priv .f-in.mono,body.priv #edNote,body.priv .mini,
-body.priv .lg b,body.priv .donut-center b,body.priv .ib-a,body.priv .sl-row b,body.priv #autoUrl,body.priv #autoKey{
+body.priv .lg b,body.priv .donut-center b,body.priv .g-nums,body.priv .g-eta,body.priv .gv,body.priv .ib-a,body.priv .sl-row b,body.priv #autoUrl,body.priv #autoKey{
   filter:blur(8px);user-select:none;pointer-events:none;transition:filter .18s ease}
 body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 @media (prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
@@ -350,7 +383,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       <span class="mini" id="miniRemain"></span>
     </div>
     <div class="head-tools">
-      <a href="#inboxSec" class="ib-badge num hide" id="ibBadge" aria-label="عمليات بانتظار التصنيف"></a>
+      <a href="#" class="ib-badge num hide" id="ibBadge" aria-label="عمليات بانتظار التصنيف"></a>
       <select class="month-pick" id="monthPick" aria-label="الشهر"></select>
       <button class="eye" id="eye" type="button" aria-label="إخفاء الأرقام" title="إخفاء الأرقام"></button>
     </div>
@@ -359,7 +392,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 
 <div class="wrap">
 
-  <section class="hero">
+  <section class="hero" data-tab="today">
     <h2 class="sec-title hide">سقف المصروف الشخصي</h2>
     <div class="gauge-card">
       <div class="ring-wrap" id="ringWrap">
@@ -379,8 +412,9 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       </div>
       <i id="gaugeFill"></i>
       <div class="brk" id="brk"></div>
-      <div class="form-top"></div>
-      <div class="entry" style="margin-top:0">
+      <button class="btn ghost full manual-toggle" id="manualToggle" type="button">＋ إضافة يدوية (كاش أو عملية ما وصلت)</button>
+      <div id="manualBox" class="hide">
+      <div class="entry">
         <select id="cat"></select>
         <input id="amt" type="number" inputmode="decimal" placeholder="المبلغ">
         <button class="btn" id="add">إضافة</button>
@@ -399,20 +433,20 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
         </div>
         <div class="note" style="margin-top:7px">اكتب المبلغ الكامل فوق، و«منها لغيري» حصة الشخص الثاني — تنسجل حصتك على السقف وحصته «نيابةً عن غيري» تلقائياً. «كاش باك %» لو نسبة هذا المتجر تختلف عن نسبة الفئة.</div>
       </div>
+      </div>
 
       <div class="proxyline" id="proxyLine"></div>
-      <div class="note">«نيابةً عن غيري» لا يُحتسب ضمن سقفك — اضغط «استلمت؟» لما يرجع لك المبلغ. اضغط أي عملية لتعديلها.</div>
       <div class="log" id="log"></div>
     </div>
   </section>
 
-  <section id="inboxSec" class="hide">
+  <section id="inboxSec" class="hide" data-tab="today">
     <h2 class="sec-title">من البنك — بانتظار التصنيف <span class="ib-cnt num" id="inboxCnt"></span></h2>
     <div class="card inbox" id="inbox"></div>
     <div class="row2"><button class="btn sm" id="inboxAll">سجّل الكل بالفئات المقترحة</button></div>
   </section>
 
-  <section>
+  <section data-tab="month">
     <h2 class="sec-title">البنزين</h2>
     <div class="gauge-card">
       <div class="gauge-top">
@@ -439,7 +473,13 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section id="loanSec">
+  <section data-tab="goals">
+    <h2 class="sec-title">أهدافي</h2>
+    <div id="goals"></div>
+    <button class="btn ghost full" id="goalAdd" type="button">＋ هدف جديد</button>
+  </section>
+
+  <section id="loanSec" data-tab="goals">
     <h2 class="sec-title">السلف</h2>
     <div class="card loans">
       <div class="loan-sum"><span>لك عند الناس</span><b class="num" id="loanTotal">0</b></div>
@@ -460,7 +500,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="month">
     <h2 class="sec-title">الراتب وتوزيعه</h2>
     <div class="card salary-card">
       <div class="salary-box">
@@ -483,7 +523,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="month">
     <h2 class="sec-title">كم أحوّل للادخار</h2>
     <div class="sweep">
       <div class="sw-big"><span class="num" id="swNow">—</span> <span class="rial">ريال</span></div>
@@ -492,13 +532,13 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="month">
     <h2 class="sec-title">توزيع يوم الراتب</h2>
     <div class="bus" id="bus"></div>
     <div class="balance" id="balance"></div>
   </section>
 
-  <section>
+  <section data-tab="month">
     <h2 class="sec-title">الكاش باك المكتسب</h2>
     <div class="card">
       <div class="cbgrid" id="cbgrid"></div>
@@ -510,7 +550,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="settings">
     <h2 class="sec-title">الفئات ووسائل الدفع</h2>
     <button class="btn ghost full" id="cfgToggle" style="margin-top:0">فتح الإعدادات</button>
     <div id="cfgBody" class="hide">
@@ -528,12 +568,12 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="goals">
     <h2 class="sec-title">الأصول</h2>
     <div class="card" id="assets"></div>
   </section>
 
-  <section>
+  <section data-tab="month">
     <h2 class="sec-title">سجل الشهور</h2>
     <div id="hist"></div>
     <button class="btn warn full" id="closeMonth">إغلاق الشهر وبدء شهر جديد</button>
@@ -542,7 +582,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="settings">
     <h2 class="sec-title">الربط التلقائي مع البنك</h2>
     <div class="card">
       <div class="f-lbl" style="margin-top:0">رابط الشيت (Web app)</div>
@@ -555,7 +595,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     </div>
   </section>
 
-  <section>
+  <section data-tab="settings">
     <h2 class="sec-title">نسخة احتياطية</h2>
     <div class="card">
       <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px;line-height:1.7">
@@ -579,6 +619,36 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       <button class="btn ghost" id="askNo">إلغاء</button>
       <button class="btn warn" id="askYes">متابعة</button>
     </div>
+  </div>
+</div>
+
+<nav class="tabbar" id="tabbar" aria-label="الأقسام">
+  <button type="button" data-tabbtn="today" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 8.5 8.5"/></svg><span>اليوم</span><i class="tb-badge hide" id="tbBadge"></i></button>
+  <button type="button" data-tabbtn="month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>الشهر</span></button>
+  <button type="button" data-tabbtn="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg><span>أهدافي</span></button>
+  <button type="button" data-tabbtn="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>الإعدادات</span></button>
+</nav>
+
+<div class="mask" id="goalMask">
+  <div class="modal">
+    <h3 id="gTitle">الهدف</h3>
+    <div class="f-lbl">اسم الهدف</div>
+    <input class="f-in" id="gName" type="text" placeholder="مثلاً: الزواج">
+    <div class="f-lbl">المبلغ المستهدف</div>
+    <input class="f-in mono" id="gTarget" type="number" inputmode="decimal">
+    <div class="f-lbl">الرصيد الحالي يُحسب من</div>
+    <select class="f-in" id="gLink"></select>
+    <div id="gCurWrap"><div class="f-lbl">المبلغ المجمّع حالياً</div>
+    <input class="f-in mono" id="gCur" type="number" inputmode="decimal"></div>
+    <div class="f-lbl">كم تحوّل له شهرياً</div>
+    <input class="f-in mono" id="gMonthly" type="number" inputmode="decimal">
+    <div class="f-lbl">الموعد المستهدف (اختياري)</div>
+    <input class="f-in" id="gDue" type="month">
+    <div class="row2" style="margin-top:16px">
+      <button class="btn ghost" id="gCancel" type="button">إلغاء</button>
+      <button class="btn" id="gSave" type="button">حفظ</button>
+    </div>
+    <button class="btn danger full" id="gDel" type="button">حذف الهدف</button>
   </div>
 </div>
 
@@ -1083,7 +1153,10 @@ function renderCfg(){
 }
 function renderAssets(){
   const m=M();
-  document.getElementById('assets').innerHTML=m.assets.map(a=>`
+  applyGold();
+  document.getElementById('assets').innerHTML=m.assets.map(a=>a.id==='gold'&&S.gold&&S.gold.grams?`
+    <div class="asset"><div class="an">${a.name}<small>${goldSub()}</small><span class="gv">القيمة: <span class="num">${n(a.val)}</span> ريال</span></div>
+      <div class="gold-in"><input type="number" inputmode="decimal" data-ggrams value="${S.gold.grams}"><span>جرام</span></div></div>`:`
     <div class="asset"><div class="an">${a.name}<small>${a.sub}</small></div>
       <input type="number" inputmode="decimal" data-asset="${a.id}" value="${a.val}"></div>`).join('')+
     `<div class="net"><span style="font-size:12.5px;color:var(--muted)">إجمالي الأصول</span>
@@ -1109,13 +1182,17 @@ function refreshFlow(){
   if(sa&&sv)sa.textContent=n(sv.amount);
   drawBalance();renderSweep();
 }
-function refreshAll(){renderCap();renderFuel();renderCB();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans()}
+function refreshAll(){renderCap();renderFuel();renderCB();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans();if(typeof renderGoals==='function')renderGoals()}
 
 document.getElementById('salary').addEventListener('input',e=>{M().salary=+e.target.value||0;save();refreshFlow()});
 document.getElementById('bus').addEventListener('input',e=>{
   const id=e.target.dataset.line;if(!id)return;
   M().lines.find(x=>x.id===id).amount=+e.target.value||0;
   save();refreshFlow();renderCap();renderFuel();
+});
+document.getElementById('assets').addEventListener('change',e=>{
+  if(!e.target.hasAttribute('data-ggrams'))return;
+  S.gold.grams=+e.target.value||0;save();renderAssets();renderGoals();
 });
 document.getElementById('assets').addEventListener('input',e=>{
   const id=e.target.dataset.asset;if(!id)return;
@@ -1445,6 +1522,7 @@ function parseSms(t,sender){
 // ===== Auto logging from bank SMS (via Google Sheet) =====
 function initAuto(){
   if(!Array.isArray(S.loans))S.loans=[];
+  initGoals();initGold();
   S.auto=Object.assign({url:'',key:'',since:0,seen:[],pending:[],log:[],merch:{}},S.auto||{});
   const ens=(id,name)=>{if(!S.pays.some(p=>p.id===id))S.pays.push({id,name,cb:false})};
   ens('transfer','تحويل');ens('rajhi','مدى الراجحي');ens('tiqmo','تيقمو');
@@ -1527,6 +1605,7 @@ function renderInbox(){
   }).join('');
   document.getElementById('inboxAll').classList.toggle('hide',!P.some(p=>p.kind!=='in'&&p.cat));
   const mini=document.getElementById('ibBadge');if(mini){mini.textContent=P.length;mini.classList.toggle('hide',!P.length)}
+  const tb=document.getElementById('tbBadge');if(tb){tb.textContent=P.length;tb.classList.toggle('hide',!P.length)}
 }
 function renderSyncLog(){
   const el=document.getElementById('syncLog');if(!el)return;
@@ -1568,8 +1647,101 @@ function renderAutoCfg(){
   document.getElementById('autoUrl').value=S.auto.url||'';document.getElementById('autoKey').value=S.auto.key||'';
   setSyncStatus();renderSyncLog();
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncSms(false)});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncSms(false);fetchGold(false)}});
 
+
+
+// ===== Tabs =====
+function setTab(t){
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('tab-off',x.dataset.tab!==t));
+  document.querySelectorAll('[data-tabbtn]').forEach(b=>b.classList.toggle('on',b.dataset.tabbtn===t));
+  window.scrollTo(0,0);
+}
+document.getElementById('tabbar').addEventListener('click',e=>{const b=e.target.closest('[data-tabbtn]');if(b)setTab(b.dataset.tabbtn)});
+document.getElementById('ibBadge').addEventListener('click',e=>{e.preventDefault();setTab('today');setTimeout(()=>document.getElementById('inboxSec').scrollIntoView({behavior:'smooth'}),50)});
+document.getElementById('manualToggle').addEventListener('click',()=>{
+  const b=document.getElementById('manualBox'),open=b.classList.toggle('hide')===false;
+  document.getElementById('manualToggle').textContent=open?'إخفاء الإضافة اليدوية':'＋ إضافة يدوية (كاش أو عملية ما وصلت)';
+});
+
+// ===== Goals =====
+function initGoals(){
+  if(Array.isArray(S.goals))return;
+  S.goals=[];const m=S.months[S.current]||Object.values(S.months).pop();if(!m)return;
+  const ball=m.lines.find(l=>l.id==='ball'),blc=m.assets.find(a=>a.id==='blc');
+  const tg=(((ball&&ball.dest)||'')+' '+((blc&&blc.sub)||'')).match(/(\d{1,3}(?:,\d{3})+|\d{4,})/);
+  if(blc)S.goals.push({id:'g_ball',name:'دفعة البالون',target:tg?+tg[1].replace(/,/g,''):0,link:'blc',cur:0,monthly:ball?+ball.amount:0,due:''});
+  const emg=m.assets.find(a=>a.id==='emg');
+  if(emg)S.goals.push({id:'g_emg',name:'حساب الطوارئ',target:+emg.val||0,link:'emg',cur:0,monthly:0,due:''});
+  S.goals.push({id:'g_mar',name:'الزواج',target:0,link:'',cur:0,monthly:0,due:''});
+}
+const ymOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+function addMonths(k){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+k);return ymOf(d)}
+function monthsUntil(ym){const [y,mo]=ym.split('-').map(Number),d=new Date();return (y-d.getFullYear())*12+(mo-(d.getMonth()+1))}
+function goalCur(g){if(g.link){const a=M().assets.find(x=>x.id===g.link);return a?+a.val||0:0}return +g.cur||0}
+function renderGoals(){
+  const el=document.getElementById('goals');if(!el)return;
+  el.innerHTML=S.goals.map(g=>{
+    const cur=goalCur(g),t=+g.target||0,pct=t?Math.min(cur/t,1):0,rem=Math.max(t-cur,0),done=t>0&&rem<=0;
+    let eta='';
+    if(!t)eta='اضغط وحدد المبلغ المستهدف.';
+    else if(done)eta='<span class="ok">مكتمل ✓</span>';
+    else{
+      if(+g.monthly>0){const k=Math.ceil(rem/g.monthly);eta+=`بوتيرتك (<span class="num">${n(g.monthly)}</span> شهرياً) توصل في <b>${monthLabel(addMonths(k))}</b> — بعد ${k} شهر.`}
+      else eta+='حدد كم تحوّل له شهرياً عشان أحسب موعد الوصول.';
+      if(g.due){const ml=Math.max(monthsUntil(g.due),1),need=rem/ml,ok=+g.monthly>=need-0.5;
+        eta+=`<br>عشان توصل في <b>${monthLabel(g.due)}</b> تحتاج <span class="num ${ok?'ok':'warn'}">${n(Math.ceil(need))}</span> شهرياً ${ok?'<span class="ok">✓ ماشي صح</span>':'<span class="warn">— ناقصك '+n(Math.ceil(need-(+g.monthly||0)))+'</span>'}`}
+    }
+    return`<div class="goal card${done?' done':''}" data-goal="${g.id}"><div class="g-top"><strong>${escapeHtml(g.name)}</strong><span class="g-pct">${t?Math.floor(pct*100)+'%':'—'}</span></div>
+      <div class="g-bar"><i style="width:${(pct*100).toFixed(1)}%"></i></div>
+      <div class="g-nums"><span class="num">${n(cur)}</span> من <span class="num">${t?n(t):'؟'}</span>${t&&!done?` · باقي <span class="num">${n(rem)}</span>`:''}</div>
+      <div class="g-eta">${eta}</div></div>`;
+  }).join('')||'<div class="empty">ما عندك أهداف. أضف أول هدف.</div>';
+}
+let gEditing=null;
+function openGoal(id){
+  const g=id?S.goals.find(x=>x.id===id):{id:'g'+Date.now(),name:'',target:0,link:'',cur:0,monthly:0,due:''};gEditing={g,isNew:!id};
+  const $=x=>document.getElementById(x);
+  $('gTitle').textContent=id?'تعديل الهدف':'هدف جديد';$('gName').value=g.name;$('gTarget').value=g.target||'';
+  $('gLink').innerHTML='<option value="">يدوي — أكتبه بنفسي</option>'+M().assets.map(a=>`<option value="${a.id}"${a.id===g.link?' selected':''}>${escapeHtml(a.name)}</option>`).join('');
+  $('gCur').value=g.cur||'';$('gMonthly').value=g.monthly||'';$('gDue').value=g.due||'';
+  $('gCurWrap').classList.toggle('hide',!!g.link);$('gDel').classList.toggle('hide',!id);
+  $('goalMask').classList.add('on');
+}
+document.getElementById('gLink').addEventListener('change',e=>document.getElementById('gCurWrap').classList.toggle('hide',!!e.target.value));
+document.getElementById('goals').addEventListener('click',e=>{const c=e.target.closest('[data-goal]');if(c)openGoal(c.dataset.goal)});
+document.getElementById('goalAdd').addEventListener('click',()=>openGoal(null));
+document.getElementById('gCancel').addEventListener('click',()=>document.getElementById('goalMask').classList.remove('on'));
+document.getElementById('goalMask').addEventListener('click',e=>{if(e.target.id==='goalMask')e.currentTarget.classList.remove('on')});
+document.getElementById('gSave').addEventListener('click',()=>{
+  const $=x=>document.getElementById(x),{g,isNew}=gEditing;
+  g.name=$('gName').value.trim()||'هدف';g.target=+$('gTarget').value||0;g.link=$('gLink').value;g.cur=+$('gCur').value||0;
+  g.monthly=+$('gMonthly').value||0;g.due=$('gDue').value||'';if(isNew)S.goals.push(g);
+  save();renderGoals();$('goalMask').classList.remove('on');toast('انحفظ الهدف');
+});
+document.getElementById('gDel').addEventListener('click',async()=>{
+  if(!await ask('حذف هذا الهدف؟'))return;S.goals=S.goals.filter(x=>x.id!==gEditing.g.id);save();renderGoals();document.getElementById('goalMask').classList.remove('on');
+});
+
+// ===== Gold live price =====
+function initGold(){
+  if(S.gold)return;const m=S.months[S.current]||Object.values(S.months).pop();const a=m&&m.assets.find(x=>x.id==='gold');const sub=(a&&a.sub)||'';
+  const g=sub.match(/(\d+(?:\.\d+)?)\s*(?:قرام|جرام|غرام|g)/),k=sub.match(/عيار\s*(\d+)/);
+  S.gold={grams:g?+g[1]:0,karat:k?+k[1]:24,price:0,at:0};
+}
+function goldValue(){const g=S.gold;return g&&g.grams&&g.price?+(g.grams*g.price*(g.karat||24)/24).toFixed(2):0}
+function applyGold(){const v=goldValue(),m=M();if(!v||m.closed)return;const a=m.assets.find(x=>x.id==='gold');if(a)a.val=v}
+function goldSub(){const g=S.gold;if(!g.price)return`${g.grams} جرام عيار ${g.karat} — جارٍ جلب السعر…`;
+  const t=new Date(g.at);return`عيار ${g.karat} · الجرام <span class="num">${n(g.price)}</span> ريال · تحدّث ${shortD(isoDay(g.at))} ${t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`}
+async function fetchGold(force){
+  if(!S.gold||!S.gold.grams)return;if(!force&&S.gold.at&&Date.now()-S.gold.at<30*60*1000)return;
+  const OZ=31.1034768,USD_SAR=3.75;let usd=0;
+  const tries=[['https://xaus.com/api/v1/spot?compact=1',j=>j.spot_usd_oz||(j.xau&&j.xau.price)],['https://api.gold-api.com/price/XAU',j=>j.price]];
+  for(const[u,pick]of tries){try{const j=await(await fetch(u,{cache:'no-store'})).json();const v=+pick(j);if(v>500){usd=v;break}}catch(e){}}
+  if(!usd)return;
+  S.gold.price=+(usd*USD_SAR/OZ).toFixed(2);S.gold.at=Date.now();
+  applyGold();save();renderAssets();renderGoals();
+}
 
 // ===== Loans (across months) =====
 const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
@@ -1608,7 +1780,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 load();
-renderAutoCfg();renderLoans();renderInbox();syncSms(false);
+renderAutoCfg();renderLoans();renderGoals();setTab('today');fetchGold(false);renderInbox();syncSms(false);
 (()=>{const bar=document.getElementById('topbar'),hero=document.getElementById('ringWrap');
   if('IntersectionObserver' in window){new IntersectionObserver(([e])=>bar.classList.toggle('scrolled',!e.isIntersecting),{rootMargin:'-60px 0px 0px 0px'}).observe(hero)}})();
 
