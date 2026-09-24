@@ -388,6 +388,31 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(227,181
 .jam-kv b{font-family:var(--num);font-size:16px;font-weight:600;direction:ltr;display:inline-block}
 .jam-msg{margin-top:12px;font-size:13px;line-height:1.8;padding:10px 12px;border-radius:var(--r-s);background:rgba(79,209,165,.08);color:var(--mint)}
 
+/* ---------- payday ---------- */
+.pay-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pay-head strong{font-family:var(--num);font-size:16px;font-weight:600}
+.pay-head span{font-size:12.5px;color:var(--muted)}
+.pay-bar{height:8px;background:var(--surface2);border-radius:5px;margin:12px 0 6px;overflow:hidden}
+.pay-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),#8FE6C8);border-radius:5px;transition:width .6s cubic-bezier(.22,1,.36,1)}
+.ps{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
+.ps:last-child{border-bottom:none}
+.ps-c{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.ps.done .ps-c{background:var(--mint);border-color:var(--mint)}
+.ps.done .ps-c::after{content:'';width:6px;height:11px;border:solid #10152E;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.ps-n{flex:1;min-width:0}
+.ps-n strong{display:block;font-size:14.5px;font-weight:500}
+.ps-n small{display:block;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps.done .ps-n strong{color:var(--muted);text-decoration:line-through}
+.ps-a{font-family:var(--num);font-size:15px;font-weight:500;direction:ltr}
+.ps-auto{font-size:10px;color:var(--mint);border:1px solid rgba(79,209,165,.45);border-radius:20px;padding:0 6px;margin-right:6px;vertical-align:1px}
+.ps-btn{margin:4px 0 2px}
+.pay-banner{display:flex;align-items:center;gap:12px;cursor:pointer;border-color:rgba(79,209,165,.4);background:linear-gradient(90deg,rgba(79,209,165,.1),var(--surface))}
+.pay-banner .pb-ic{font-size:22px}
+.pay-banner .pb-t{flex:1}
+.pay-banner strong{display:block;font-size:14.5px;font-weight:600}
+.pay-banner small{font-size:12px;color:var(--muted)}
+.pay-banner b{font-family:var(--num);color:var(--mint);font-size:16px}
+
 /* ---------- misc ---------- */
 .note{font-size:12px;color:var(--muted);line-height:1.8;padding:2px 12px 0 0;margin-top:12px;border-right:2px solid var(--line)}
 .row2{display:flex;gap:8px;margin-top:10px}
@@ -432,7 +457,7 @@ body.priv .sw-row .v,body.priv .auto-amt,body.priv .b-amt,body.priv .b-name smal
 body.priv .gross,body.priv .ticks,body.priv .stats b,body.priv .cbcell .v,body.priv .cbcell .cap,body.priv .brk b,
 body.priv .proxyline b,body.priv .asset input,body.priv .asset .an small,body.priv .net b,body.priv .hist-row .hs,
 body.priv .balance span:last-child,body.priv #box,body.priv .f-in.mono,body.priv #edNote,body.priv .mini,
-body.priv .lg b,body.priv .donut-center b,body.priv .rep-big,body.priv .rc-v,body.priv .rm b,body.priv .rep-kpis b,body.priv .ob-a,body.priv .ob-sum b,body.priv .jam-kv b,body.priv .jam-msg,body.priv .g-nums,body.priv .g-eta,body.priv .gv,body.priv .ib-a,body.priv .sl-row b,body.priv #autoUrl,body.priv #autoKey{
+body.priv .lg b,body.priv .donut-center b,body.priv .ps-a,body.priv .rep-big,body.priv .rc-v,body.priv .rm b,body.priv .rep-kpis b,body.priv .ob-a,body.priv .ob-sum b,body.priv .jam-kv b,body.priv .jam-msg,body.priv .g-nums,body.priv .g-eta,body.priv .gv,body.priv .ib-a,body.priv .sl-row b,body.priv #autoUrl,body.priv #autoKey{
   filter:blur(8px);user-select:none;pointer-events:none;transition:filter .18s ease}
 body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 @media (prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
@@ -510,9 +535,18 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     <div class="row2"><button class="btn sm" id="inboxAll">سجّل الكل بالفئات المقترحة</button></div>
   </section>
 
+  <section id="payBanner" class="hide" data-tab="today">
+    <div class="card pay-banner" id="payBannerIn"></div>
+  </section>
+
   <section id="soonSec" class="hide" data-tab="today">
     <h2 class="sec-title">قادم قريباً</h2>
     <div class="card" id="soon"></div>
+  </section>
+
+  <section data-tab="month" id="paySec">
+    <h2 class="sec-title">يوم الراتب</h2>
+    <div class="card pay" id="payday"></div>
   </section>
 
   <section data-tab="month">
@@ -1541,6 +1575,7 @@ document.getElementById('closeMonth').addEventListener('click',async()=>{
     const nd=new Date(y,mo,1);let k=monthKey(nd);
     while(S.months[k]){nd.setMonth(nd.getMonth()+1);k=monthKey(nd)}
     S.months[k]=freshMonth(cur);S.current=k;
+    if(typeof paydayMark==='function'){const pd=paydayDate();if(Math.abs(daysTo(pd))<=7)paydayMark('close')}
     document.getElementById('eDate').value='';document.getElementById('fDate').value='';
     save();render();window.scrollTo({top:0,behavior:'smooth'});toast('بدأ '+monthLabel(k));
   }catch(err){toast('خطأ: '+err.message)}
@@ -1713,12 +1748,14 @@ async function syncSms(manual){
       const h=hashStr(String(row.text));if(A.seen.includes(h))continue;A.seen.push(h);
       const p=parseSms(row.text,row.from),date=isoDay(row.time);
       if(p.kind==='noise')continue;
+      let pdm=false;try{pdm=paydayMatchSms(p,date)}catch(e){}
+      if(pdm&&p.kind==='out'){A.log.unshift({d:date,k:'ignore',a:p.amt,l:p.person||'',w:'تحويل يوم الراتب'});continue}
       A.log.unshift({d:date,k:p.kind,a:p.amt,l:p.merchant||p.person||'',w:p.why||''});
       if(['expense','out','in','unknown'].includes(p.kind)){A.pending.push(mkPending(row.id,p,date,row.text));added++}
       else if(p.kind==='cashback'){const m=M();m.cbReal=+((m.cbReal||0)+p.amt).toFixed(2);cb++}
     }
     A.seen=A.seen.slice(-600);A.log=A.log.slice(0,40);A.lastSync=Date.now();
-    save();renderInbox();renderSyncLog();if(cb)renderCB();setSyncStatus();
+    save();renderInbox();renderSyncLog();if(cb)renderCB();setSyncStatus();if(typeof renderPayday==='function')renderPayday();
     if(manual||added)toast(added?`${added} عملية جديدة من البنك`:'ما فيه عمليات جديدة');
   }catch(e){setSyncStatus('تعذّر التحديث: '+(e.message||'تحقق من الاتصال'));if(manual)toast('تعذّر التحديث')}
   finally{syncing=false;if(btn)btn.disabled=false}
@@ -2019,7 +2056,7 @@ document.getElementById('jSave').addEventListener('click',()=>{
 });
 document.getElementById('jDel').addEventListener('click',async()=>{if(!await ask('حذف بيانات الجمعية؟'))return;S.jam=null;save();renderJam();renderObl();document.getElementById('jamMask').classList.remove('on')});
 
-function renderPhase2(){if(!S.obl)initObl();renderReport();renderObl();renderJam()}
+function renderPhase2(){if(!S.obl)initObl();renderReport();renderObl();renderJam();renderPayday()}
 
 
 // ===== Cloud backup (Google Sheet) =====
@@ -2056,6 +2093,60 @@ async function cloudRestore(){
 }
 document.getElementById('cloudUp').addEventListener('click',()=>cloudBackup(true));
 document.getElementById('cloudDown').addEventListener('click',cloudRestore);
+
+
+// ===== Payday checklist =====
+const PAY_DAY=28;
+function paydayDate(){
+  const t=todayD();let y=t.getFullYear(),m=t.getMonth()+1;
+  let d=new Date(y,m-1,Math.min(PAY_DAY,dim(y,m)));
+  if(daysTo(d)< -6){const nx=ymAdd(`${y}-${pad2(m)}`,1).split('-').map(Number);d=new Date(nx[0],nx[1]-1,Math.min(PAY_DAY,dim(nx[0],nx[1])))}
+  return d;
+}
+function paydayRec(){
+  const d=paydayDate(),key=isoDay(d);
+  if(!S.payday||S.payday.key!==key)S.payday={key,done:{},auto:{}};
+  return S.payday;
+}
+function paydaySteps(){
+  const m=M(),rec=paydayRec();
+  const st=[{id:'salary',name:'نزل الراتب',sub:'حوالة الراتب في حسابك',amt:+m.salary||0}];
+  const closedPrev=!!rec.done.close;
+  st.push({id:'close',name:'أقفل الشهر وابدأ الجديد',sub:closedPrev?'تم':'يحفظ الشهر الحالي ويفتح شهر جديد بنفس الثوابت',amt:null,action:!closedPrev});
+  m.lines.filter(l=>l.kind!=='pre'&&+l.amount>0).forEach(l=>st.push({id:'l_'+l.id,name:l.name,sub:l.dest||'',amt:+l.amount}));
+  return st;
+}
+function paydayMark(id,auto){const r=paydayRec();r.done[id]=true;if(auto)r.auto[id]=true;save()}
+function paydayMatchSms(p,date){
+  if(p.amt==null)return false;const r=paydayRec(),pd=paydayDate();
+  const dd=Math.round((new Date(date)-pd)/864e5);if(dd<-3||dd>6)return false;
+  const text=(p.why||'')+' '+(p.kind||'');
+  if(/دخل/.test(p.why||'')&&sameAmt(p.amt,+M().salary)){if(!r.done.salary){r.done.salary=true;r.auto.salary=true}return true}
+  for(const s of paydaySteps()){if(s.id==='salary'||s.id==='close'||r.done[s.id]||s.amt==null)continue;
+    if(sameAmt(s.amt,p.amt)&&(p.kind==='ignore'||p.kind==='out')){r.done[s.id]=true;r.auto[s.id]=true;return true}}
+  return false;
+}
+function renderPayday(){
+  const el=document.getElementById('payday');if(!el)return;
+  const d=paydayDate(),k=daysTo(d),r=paydayRec(),st=paydaySteps(),done=st.filter(s=>r.done[s.id]).length,pct=done/st.length*100;
+  const when=k>0?`بعد ${k} ${k===1?'يوم':'أيام'}`:k===0?'اليوم':`قبل ${-k} ${-k===1?'يوم':'أيام'}`;
+  el.innerHTML=`<div class="pay-head"><strong>${d.getDate()} ${AR_MONTHS[d.getMonth()]}</strong><span>${when} · ${done} من ${st.length}</span></div>
+    <div class="pay-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+    ${st.map(s=>`<div class="ps${r.done[s.id]?' done':''}" data-ps="${s.id}"><span class="ps-c"></span>
+      <div class="ps-n"><strong>${escapeHtml(s.name)}${r.auto[s.id]?'<span class="ps-auto">من البنك</span>':''}</strong>${s.sub?`<small>${escapeHtml(s.sub)}</small>`:''}</div>
+      ${s.amt!=null?`<b class="ps-a">${n(s.amt)}</b>`:''}</div>`).join('')}
+    ${done===st.length?'<div class="jam-msg" style="margin-top:12px">خلصت يوم الراتب ✓ كل شي في مكانه.</div>':''}`;
+  const b=document.getElementById('payBanner'),show=k<=2&&k>=-5&&done<st.length;
+  b.classList.toggle('hide',!show);
+  if(show)document.getElementById('payBannerIn').innerHTML=`<span class="pb-ic">💰</span><div class="pb-t"><strong>يوم الراتب ${k===0?'اليوم':when}</strong><small>اضغط وامشِ على الخطوات</small></div><b class="num">${done}/${st.length}</b>`;
+}
+document.getElementById('payday').addEventListener('click',async e=>{
+  const r=e.target.closest('[data-ps]');if(!r)return;const id=r.dataset.ps,rec=paydayRec();
+  if(id==='close'&&!rec.done.close){document.getElementById('closeMonth').click();return}
+  if(rec.done[id]){delete rec.done[id];delete rec.auto[id]}else rec.done[id]=true;
+  save();renderPayday();
+});
+document.getElementById('payBanner').addEventListener('click',()=>{setTab('month')});
 
 // ===== Loans (across months) =====
 const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
