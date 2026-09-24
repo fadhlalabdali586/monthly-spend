@@ -953,6 +953,7 @@ const DEFAULT_CATS=[
   {id:'gift',     name:'هدايا ومناسبات', cb:0.7, cbCap:100, inCap:true},
   {id:'other',    name:'أخرى',         cb:0.7, cbCap:100, inCap:true},
   {id:'proxy',    name:'نيابةً عن غيري', cb:0.7, cbCap:100, inCap:false},
+  {id:'fromsave', name:'من الادخار', cb:0, cbCap:100, inCap:false, noRet:true, asset:'sav'},
   {id:'fuel',     name:'بنزين',        cb:11,  cbCap:100, inCap:true, sys:true}
 ];
 const DEFAULT_PAYS=[
@@ -977,11 +978,12 @@ const payOf=id=>S.pays.find(p=>p.id===id)||null;
 const payName=id=>{const p=payOf(id);return p?p.name:id};
 const payHasCb=id=>{const p=payOf(id);return p?!!p.cb:true};
 const inCap=id=>{const c=catOf(id);return c?c.inCap!==false:id!=='proxy'};
+const isRet=id=>{const c=catOf(id);return c?(c.inCap===false&&c.noRet!==true):id==='proxy'};
 const cbRate=id=>{const c=catOf(id);return c?+c.cb||0:(LEGACY_CB[id]||0)};
 const hasCbr=e=>e.cbr!==undefined&&e.cbr!==null&&e.cbr!=='';
 const rateOf=e=>hasCbr(e)?+e.cbr:cbRate(e.cat);
 const cbOn=e=>payHasCb(e.pay)?e.amt*rateOf(e)/100:0;
-const proxyCat=()=>{const c=S.cats.find(c=>c.inCap===false);return c?c.id:'proxy'};
+const proxyCat=()=>{const c=S.cats.find(c=>c.inCap===false&&c.noRet!==true);return c?c.id:'proxy'};
 
 function legacyDate(d,key){
   const[ky,km]=key.split('-').map(Number);
@@ -1018,7 +1020,7 @@ function load(){
 }
 
 function migrate(){
-  if(S.v>=6){return}
+  if(S.v>=6){ensureFromSave();return}
   if(!(S.v>=4)){
   const ZAM={id:'zamala',name:'صندوق الزمالة',dest:'يُخصم قبل نزول الراتب — أساس القرض من الشركة',amount:500,kind:'pre',color:'#5FA8B8'};
   const JAM={id:'jam',name:'الجمعية',dest:'تحويل يدوي من الجاري — يعود دفعة واحدة عند دورك',amount:1000,kind:'save',color:'#8FA05C'};
@@ -1077,10 +1079,30 @@ function migrate(){
     });
     S.v=6;
   }
+  ensureFromSave();
+  save();
+}
+function ensureFromSave(){
+  if(!Array.isArray(S.cats))return;
+  const f=S.cats.find(c=>c.id==='fromsave');
+  if(f){if(!('asset' in f)){f.asset='sav';save()}return}
+  const i=S.cats.findIndex(c=>c.id==='proxy');
+  S.cats.splice(i<0?S.cats.length:i+1,0,{id:'fromsave',name:'من الادخار',cb:0,cbCap:100,inCap:false,noRet:true,asset:'sav'});
   save();
 }
 
+function reconcileAssets(){
+  const m=S&&S.months&&S.months[S.current];if(!m||m.closed||!Array.isArray(m.assets))return;
+  const want={};
+  (m.expenses||[]).forEach(e=>{const c=catOf(e.cat);if(c&&c.asset&&m.assets.some(a=>a.id===c.asset))want[e.id]={a:c.asset,v:+e.amt||0}});
+  const led=m.aLedger||{},r2=x=>Math.round(x*100)/100;
+  const adj=(id,d)=>{const a=m.assets.find(x=>x.id===id);if(a)a.val=r2((+a.val||0)+d)};
+  Object.keys(led).forEach(k=>{const o=led[k],w=want[k];if(!w||w.a!==o.a||w.v!==o.v)adj(o.a,o.v)});
+  Object.keys(want).forEach(k=>{const o=led[k],w=want[k];if(!o||w.a!==o.a||w.v!==o.v)adj(w.a,-w.v)});
+  m.aLedger=want;
+}
 function save(){
+  try{reconcileAssets()}catch(e){}
   clearTimeout(t0);
   t0=setTimeout(()=>{
     try{localStorage.setItem(KEY,JSON.stringify(S))}
@@ -1238,11 +1260,11 @@ function byDate(a,b){
 function opRow(e,attr){
   const cbv=cbOn(e),p=payOf(e.pay);
   const showPay=p&&!p.cb;
-  const isPx=attr==='data-ed'&&!inCap(e.cat);
+  const isPx=attr==='data-ed'&&isRet(e.cat);
   return `<div class="log-row${isPx&&e.got?' got':''}" ${attr}="${e.id}">
     <div class="log-main">
       <i class="cdot" style="background:${catColor(e.cat)}"></i>
-      <span class="tag${inCap(e.cat)?'':' ret'}">${catName(e.cat)}</span>
+      <span class="tag${isRet(e.cat)?' ret':''}">${catName(e.cat)}</span>
       <span class="log-date">${shortD(e.date)}</span>
       ${showPay?`<span class="tag pay">${p.name}</span>`:''}
       <span class="log-amt" style="margin-right:auto">${n(e.amt)}</span>
@@ -1272,7 +1294,7 @@ function renderCap(){
   document.getElementById('pace').textContent=n(cap/4.3);
   document.getElementById('daily').textContent=n(spent/Math.max(day,1));
 
-  const px=m.expenses.filter(e=>!inCap(e.cat));
+  const px=m.expenses.filter(e=>isRet(e.cat));
   const outCap=px.filter(e=>!e.got).reduce((s,e)=>s+e.amt,0);
   const gotSum=px.filter(e=>e.got).reduce((s,e)=>s+e.amt,0);
   const pl=document.getElementById('proxyLine');
@@ -1347,7 +1369,7 @@ function renderCfg(){
       <input type="text" data-f="name" value="${escapeHtml(c.name)}"${c.sys?' readonly':''}>
       <span class="lbl">%</span><input type="number" step="0.1" data-f="cb" value="${c.cb}">
       <span class="lbl">سقف</span><input type="number" data-f="cbCap" value="${c.cbCap}">
-      <label class="chk"><input type="checkbox" data-f="inCap"${c.inCap!==false?' checked':''}>ضمن السقف</label>
+      <label class="chk"><input type="checkbox" data-f="inCap"${c.inCap!==false?' checked':''}>ضمن السقف</label>${c.inCap===false?`<label class="chk"><input type="checkbox" data-f="ret"${c.noRet?'':' checked'}>مسترد</label>`:''}${c.inCap===false&&c.noRet?`<select data-f="asset"><option value="">بدون خصم من الأصول</option>${(M().assets||[]).map(a=>`<option value="${a.id}"${c.asset===a.id?' selected':''}>يخصم من: ${escapeHtml(a.name)}</option>`).join('')}</select>`:''}
       ${c.sys?'<span class="del" style="opacity:.25">×</span>':`<button class="del" data-delcat="${c.id}">×</button>`}
     </div>`).join('');
   document.getElementById('payCfg').innerHTML=S.pays.map(p=>`
@@ -1480,7 +1502,7 @@ function openEdit(id,isFuel){
 }
 function syncGotWrap(){
   const w=document.getElementById('edGotWrap');
-  const show=editing&&!editing.isFuel&&!inCap(document.getElementById('edCat').value);
+  const show=editing&&!editing.isFuel&&isRet(document.getElementById('edCat').value);
   w.style.display=show?'flex':'none';
 }
 document.getElementById('edCat').addEventListener('change',syncGotWrap);
@@ -1502,7 +1524,7 @@ document.getElementById('edSave').addEventListener('click',()=>{
   const cb=document.getElementById('edCbr').value;
   if(cb==='')delete e.cbr;else e.cbr=+cb;
   if(!editing.isFuel){
-    if(!inCap(e.cat))e.got=document.getElementById('edGot').checked;
+    if(isRet(e.cat))e.got=document.getElementById('edGot').checked;
     else delete e.got;
   }
   save();refreshAll();closeEdit();toast('تم الحفظ');
@@ -1545,8 +1567,10 @@ document.getElementById('catCfg').addEventListener('input',e=>{
   const f=e.target.dataset.f;
   if(f==='name')c.name=e.target.value;
   else if(f==='inCap')c.inCap=e.target.checked;
+  else if(f==='ret')c.noRet=!e.target.checked;
+  else if(f==='asset')c.asset=e.target.value;
   else c[f]=+e.target.value||0;
-  save();fillSelects();refreshAll();
+  save();fillSelects();refreshAll();if(f==='inCap'||f==='ret')renderCfg();
 });
 document.getElementById('payCfg').addEventListener('input',e=>{
   const row=e.target.closest('[data-pay]');if(!row)return;
@@ -1798,7 +1822,7 @@ async function syncSms(manual){
 }
 const sameAmt=(a,b)=>Math.abs(+a-+b)<0.01;
 function isDup(p){const m=M();return[...m.expenses,...m.fuel].some(e=>e.src!=='sms'&&sameAmt(e.amt,p.amt)&&e.date===p.date)}
-function proxyMatches(p){return M().expenses.filter(e=>!inCap(e.cat)&&!e.got&&sameAmt(e.amt,p.amt))}
+function proxyMatches(p){return M().expenses.filter(e=>isRet(e.cat)&&!e.got&&sameAmt(e.amt,p.amt))}
 function renderInbox(){
   const P=S.auto.pending,sec=document.getElementById('inboxSec');
   sec.classList.toggle('hide',!P.length);
@@ -1831,7 +1855,7 @@ function ibApprove(id,cat){
   if(cat==='__loan'){addLoan(p.person||p.label.replace(/^تحويل إلى\s*/,''),p.amt,p.date,'','sms');if(p.mkey)S.auto.merch[p.mkey]='__loan';ibRemove(id);return true}
   const m=M(),nid=Date.now()+''+Math.floor(Math.random()*1000);
   if(cat==='fuel')m.fuel.push({id:nid,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'});
-  else{const e={id:nid,cat,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'};if(!inCap(cat))e.got=false;m.expenses.push(e)}
+  else{const e={id:nid,cat,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'};if(isRet(cat))e.got=false;m.expenses.push(e)}
   if(p.mkey)S.auto.merch[p.mkey]=cat;
   ibRemove(id);return true;
 }
