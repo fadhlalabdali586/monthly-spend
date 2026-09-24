@@ -735,9 +735,9 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     <h2 class="sec-title">الربط التلقائي مع البنك</h2>
     <div class="card">
       <div class="f-lbl" style="margin-top:0">رابط الشيت (Web app)</div>
-      <input class="f-in mono" id="autoUrl" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input class="f-in mono" id="autoUrl" autocorrect="off" dir="ltr" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div class="f-lbl">المفتاح السري</div>
-      <input class="f-in mono" id="autoKey" type="password" placeholder="المفتاح" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input class="f-in mono" id="autoKey" type="password" autocorrect="off" dir="ltr" placeholder="المفتاح" autocomplete="off" autocapitalize="off" spellcheck="false">
       <div class="row2"><button class="btn" id="autoSave">حفظ وتجربة</button><button class="btn ghost" id="syncBtn">تحديث الحين</button></div>
       <div class="note" id="syncStatus"></div>
       <details class="synclog"><summary>آخر الرسائل اللي وصلت وكيف انفهمت</summary><div id="syncLog"></div></details>
@@ -1776,7 +1776,7 @@ async function syncSms(manual){
   const btn=document.getElementById('syncBtn');if(btn)btn.disabled=true;
   try{
     const u=A.url.trim()+(A.url.includes('?')?'&':'?')+'k='+encodeURIComponent(A.key.trim())+'&since='+(A.since||0);
-    const j=await(await fetch(u,{cache:'no-store'})).json();
+    const j=await(await fetch(u,{cache:'no-store',credentials:'omit'})).json();
     if(!j.ok)throw new Error(j.err==='key'?'المفتاح غير صحيح':'رد غير متوقع من الشيت');
     let added=0,cb=0;
     for(const row of j.rows||[]){
@@ -1853,7 +1853,7 @@ document.getElementById('inboxAll').addEventListener('click',()=>{
 });
 document.getElementById('syncBtn').addEventListener('click',()=>syncSms(true));
 document.getElementById('autoSave').addEventListener('click',()=>{
-  S.auto.url=document.getElementById('autoUrl').value.trim();S.auto.key=document.getElementById('autoKey').value.trim();
+  const _cl=v=>String(v||'').replace(/[\s\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g,'');S.auto.url=_cl(document.getElementById('autoUrl').value);S.auto.key=_cl(document.getElementById('autoKey').value);
   save();syncSms(true);
 });
 function renderAutoCfg(){
@@ -1954,7 +1954,7 @@ async function fetchGold(force){
   if(!S.gold||!S.gold.grams)return;if(!force&&S.gold.at&&Date.now()-S.gold.at<30*60*1000)return;
   const OZ=31.1034768,USD_SAR=3.75;let usd=0;
   const tries=[['https://xaus.com/api/v1/spot?compact=1',j=>j.spot_usd_oz||(j.xau&&j.xau.price)],['https://api.gold-api.com/price/XAU',j=>j.price]];
-  for(const[u,pick]of tries){try{const j=await(await fetch(u,{cache:'no-store'})).json();const v=+pick(j);if(v>500){usd=v;break}}catch(e){}}
+  for(const[u,pick]of tries){try{const j=await(await fetch(u,{cache:'no-store',credentials:'omit'})).json();const v=+pick(j);if(v>500){usd=v;break}}catch(e){}}
   if(!usd)return;
   S.gold.price=+(usd*USD_SAR/OZ).toFixed(2);S.gold.at=Date.now();
   applyGold();save();renderAssets();renderGoals();
@@ -2107,7 +2107,7 @@ async function cloudBackup(manual){
   if(backingUp)return;if(!manual&&A.lastBackup&&Date.now()-A.lastBackup<20*3600*1000)return;
   backingUp=true;if(manual)renderCloud('جارٍ الرفع…');
   try{
-    const j=await(await fetch(A.url.trim(),{method:'POST',body:JSON.stringify({k:A.key.trim(),type:'backup',data:JSON.stringify(S)})})).json();
+    const j=await(await fetch(A.url.trim(),{credentials:'omit',method:'POST',body:JSON.stringify({k:A.key.trim(),type:'backup',data:JSON.stringify(S)})})).json();
     if(!j.ok)throw new Error(j.err==='key'?'المفتاح غير صحيح':j.err==='empty'?'حدّث كود الشيت (النسخة 2)':'رد غير متوقع');
     A.lastBackup=Date.now();save();renderCloud();if(manual)toast('انرفعت النسخة ✓');
   }catch(e){renderCloud('تعذّر رفع النسخة: '+(e.message||'تحقق من الاتصال'));if(manual)toast('تعذّر رفع النسخة')}
@@ -2118,7 +2118,7 @@ async function cloudRestore(){
   renderCloud('جارٍ جلب آخر نسخة…');
   try{
     const u=A.url.trim()+(A.url.includes('?')?'&':'?')+'k='+encodeURIComponent(A.key.trim())+'&type=backup';
-    const j=await(await fetch(u,{cache:'no-store'})).json();
+    const j=await(await fetch(u,{cache:'no-store',credentials:'omit'})).json();
     if(!j.ok)throw new Error(j.err==='key'?'المفتاح غير صحيح':'رد غير متوقع');
     if(!j.data){renderCloud();toast('ما فيه نسخة في السحابة بعد');return}
     const obj=JSON.parse(j.data);if(!obj||!obj.months)throw new Error('النسخة تالفة');
@@ -2228,7 +2228,7 @@ async function runHealth(){
   if(!A.url||!A.key)add('bad','الاتصال بالشيت','الرابط أو المفتاح ناقص — الإعدادات ← الربط التلقائي');
   else{const t0=performance.now();
     try{const u=A.url.trim()+(A.url.includes('?')?'&':'?')+'k='+encodeURIComponent(A.key.trim())+'&since='+Date.now();
-      const j=await(await fetch(u,{cache:'no-store'})).json();const ms=Math.round(performance.now()-t0);
+      const j=await(await fetch(u,{cache:'no-store',credentials:'omit'})).json();const ms=Math.round(performance.now()-t0);
       if(j.ok){connected=true;add('ok','الاتصال بالشيت',`متصل والمفتاح صحيح (${(ms/1000).toFixed(1)} ثانية)`)}
       else add('bad','الاتصال بالشيت',j.err==='key'?'المفتاح غير صحيح':'رد غير متوقع من الشيت')}
     catch(e){add('bad','الاتصال بالشيت','ما قدر يوصل — تحقق من الإنترنت')}}
