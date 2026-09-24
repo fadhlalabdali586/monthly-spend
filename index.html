@@ -683,11 +683,17 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
   <section data-tab="settings">
     <h2 class="sec-title">نسخة احتياطية</h2>
     <div class="card">
+      <div class="f-lbl" style="margin-top:0">النسخ السحابي التلقائي</div>
       <p style="font-size:12.5px;color:var(--muted);margin:0 0 4px;line-height:1.7">
-        البيانات محفوظة في هذا الجهاز فقط ولا ترفع لأي خادم. تنتقل بينك وبين نفسك فقط عبر النسخ أدناه —
-        انسخ النص واحفظه في الملاحظات كل بضعة أشهر.
+        اللوحة ترفع نسخة من بياناتك لشيتك في Google مرة كل يوم تلقائياً، وتحتفظ بآخر 30 نسخة. لو غيرت جوالك: أضف الرابط والمفتاح في «الربط التلقائي» ثم اضغط «استرجاع من السحابة».
       </p>
+      <div class="note" id="cloudStatus" style="margin-top:6px"></div>
       <div class="row2">
+        <button class="btn" id="cloudUp" type="button">ارفع نسخة الحين</button>
+        <button class="btn ghost" id="cloudDown" type="button">استرجاع من السحابة</button>
+      </div>
+      <div class="f-lbl" style="margin-top:18px">نسخة يدوية (نص)</div>
+      <div class="row2" style="margin-top:0">
         <button class="btn ghost" id="expBtn">إظهار البيانات</button>
         <button class="btn ghost" id="impBtn">استعادة من نسخة</button>
       </div>
@@ -1781,7 +1787,7 @@ function renderAutoCfg(){
   document.getElementById('autoUrl').value=S.auto.url||'';document.getElementById('autoKey').value=S.auto.key||'';
   setSyncStatus();renderSyncLog();
 }
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncSms(false);fetchGold(false)}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncSms(false);fetchGold(false);cloudBackup(false)}});
 
 
 
@@ -2015,6 +2021,42 @@ document.getElementById('jDel').addEventListener('click',async()=>{if(!await ask
 
 function renderPhase2(){if(!S.obl)initObl();renderReport();renderObl();renderJam()}
 
+
+// ===== Cloud backup (Google Sheet) =====
+function fmtWhen(t){const d=new Date(t);return shortD(isoDay(d))+' — '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+function renderCloud(msg){
+  const el=document.getElementById('cloudStatus');if(!el)return;const A=S.auto||{};
+  el.textContent=msg||(!A.url?'اربط الشيت من «الربط التلقائي» عشان يشتغل النسخ السحابي.':A.lastBackup?'آخر نسخة مرفوعة: '+fmtWhen(A.lastBackup):'ما انرفعت نسخة بعد.');
+}
+let backingUp=false;
+async function cloudBackup(manual){
+  const A=S.auto;if(!A||!A.url||!A.key){if(manual)toast('اربط الشيت أولاً من الإعدادات');renderCloud();return}
+  if(backingUp)return;if(!manual&&A.lastBackup&&Date.now()-A.lastBackup<20*3600*1000)return;
+  backingUp=true;if(manual)renderCloud('جارٍ الرفع…');
+  try{
+    const j=await(await fetch(A.url.trim(),{method:'POST',body:JSON.stringify({k:A.key.trim(),type:'backup',data:JSON.stringify(S)})})).json();
+    if(!j.ok)throw new Error(j.err==='key'?'المفتاح غير صحيح':j.err==='empty'?'حدّث كود الشيت (النسخة 2)':'رد غير متوقع');
+    A.lastBackup=Date.now();save();renderCloud();if(manual)toast('انرفعت النسخة ✓');
+  }catch(e){renderCloud('تعذّر رفع النسخة: '+(e.message||'تحقق من الاتصال'));if(manual)toast('تعذّر رفع النسخة')}
+  finally{backingUp=false}
+}
+async function cloudRestore(){
+  const A=S.auto;if(!A||!A.url||!A.key){toast('أضف رابط الشيت والمفتاح أولاً');return}
+  renderCloud('جارٍ جلب آخر نسخة…');
+  try{
+    const u=A.url.trim()+(A.url.includes('?')?'&':'?')+'k='+encodeURIComponent(A.key.trim())+'&type=backup';
+    const j=await(await fetch(u,{cache:'no-store'})).json();
+    if(!j.ok)throw new Error(j.err==='key'?'المفتاح غير صحيح':'رد غير متوقع');
+    if(!j.data){renderCloud();toast('ما فيه نسخة في السحابة بعد');return}
+    const obj=JSON.parse(j.data);if(!obj||!obj.months)throw new Error('النسخة تالفة');
+    renderCloud();
+    if(!await ask(`استرجاع النسخة المرفوعة ${fmtWhen(j.at)}؟ بتستبدل كل البيانات اللي في هذا الجوال.`))return;
+    localStorage.setItem(KEY,j.data);location.reload();
+  }catch(e){renderCloud('تعذّر الاسترجاع: '+(e.message||'تحقق من الاتصال'));toast('تعذّر الاسترجاع')}
+}
+document.getElementById('cloudUp').addEventListener('click',()=>cloudBackup(true));
+document.getElementById('cloudDown').addEventListener('click',cloudRestore);
+
 // ===== Loans (across months) =====
 const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
 const nameKey=s=>String(s||'').replace(/^(ال)/,'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -2052,7 +2094,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 load();
-renderAutoCfg();renderLoans();renderGoals();renderPhase2();setTab('today');fetchGold(false);renderInbox();syncSms(false);
+renderAutoCfg();renderLoans();renderGoals();renderPhase2();renderCloud();setTab('today');setTimeout(()=>cloudBackup(false),4000);fetchGold(false);renderInbox();syncSms(false);
 (()=>{const bar=document.getElementById('topbar'),hero=document.getElementById('ringWrap');
   if('IntersectionObserver' in window){new IntersectionObserver(([e])=>bar.classList.toggle('scrolled',!e.isIntersecting),{rootMargin:'-60px 0px 0px 0px'}).observe(hero)}})();
 
