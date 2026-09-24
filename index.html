@@ -413,6 +413,23 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(227,181
 .pay-banner small{font-size:12px;color:var(--muted)}
 .pay-banner b{font-family:var(--num);color:var(--mint);font-size:16px}
 
+/* ---------- health ---------- */
+.hc{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start}
+.hc:last-child{border-bottom:none}
+.hc-i{width:24px;height:24px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-top:1px}
+.hc.ok .hc-i{background:rgba(79,209,165,.18);color:var(--mint)}
+.hc.warn .hc-i{background:rgba(227,181,91,.18);color:var(--gold)}
+.hc.bad .hc-i{background:rgba(255,107,94,.18);color:var(--coral)}
+.hc-t{flex:1;min-width:0}
+.hc-t strong{display:block;font-size:14px;font-weight:500}
+.hc-t small{display:block;font-size:12px;color:var(--muted);line-height:1.7;margin-top:1px}
+.hc-sum{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.hc-sum span{font-size:12px;border-radius:20px;padding:3px 10px;background:var(--surface2)}
+.alert-card{display:flex;gap:12px;align-items:center;cursor:pointer;border-color:rgba(227,181,91,.5);background:linear-gradient(90deg,rgba(227,181,91,.12),var(--surface))}
+.alert-card .al-i{font-size:22px}
+.alert-card strong{display:block;font-size:14px;font-weight:600}
+.alert-card small{font-size:12px;color:var(--muted);line-height:1.6}
+
 /* ---------- misc ---------- */
 .note{font-size:12px;color:var(--muted);line-height:1.8;padding:2px 12px 0 0;margin-top:12px;border-right:2px solid var(--line)}
 .row2{display:flex;gap:8px;margin-top:10px}
@@ -533,6 +550,10 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
     <h2 class="sec-title">من البنك — بانتظار التصنيف <span class="ib-cnt num" id="inboxCnt"></span></h2>
     <div class="card inbox" id="inbox"></div>
     <div class="row2"><button class="btn sm" id="inboxAll">سجّل الكل بالفئات المقترحة</button></div>
+  </section>
+
+  <section id="alertSec" class="hide" data-tab="today">
+    <div class="card alert-card" id="alertIn"></div>
   </section>
 
   <section id="payBanner" class="hide" data-tab="today">
@@ -666,6 +687,15 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
         <b class="num" id="cbTotal">0</b>
       </div>
       <div class="note" id="cbNote"></div>
+    </div>
+  </section>
+
+  <section data-tab="settings">
+    <h2 class="sec-title">صحة النظام</h2>
+    <div class="card">
+      <div id="health"><div class="empty" style="padding:6px 0 12px">اضغط «افحص الحين» عشان تتأكد إن كل شي شغال.</div></div>
+      <button class="btn full" id="healthRun" type="button">افحص الحين</button>
+      <div class="note" id="healthAt" style="margin-top:10px"></div>
     </div>
   </section>
 
@@ -1755,7 +1785,7 @@ async function syncSms(manual){
       else if(p.kind==='cashback'){const m=M();m.cbReal=+((m.cbReal||0)+p.amt).toFixed(2);cb++}
     }
     A.seen=A.seen.slice(-600);A.log=A.log.slice(0,40);A.lastSync=Date.now();
-    save();renderInbox();renderSyncLog();if(cb)renderCB();setSyncStatus();if(typeof renderPayday==='function')renderPayday();
+    save();renderInbox();renderSyncLog();if(cb)renderCB();setSyncStatus();if(typeof renderPayday==='function')renderPayday();if(typeof renderAlerts==='function')renderAlerts();
     if(manual||added)toast(added?`${added} عملية جديدة من البنك`:'ما فيه عمليات جديدة');
   }catch(e){setSyncStatus('تعذّر التحديث: '+(e.message||'تحقق من الاتصال'));if(manual)toast('تعذّر التحديث')}
   finally{syncing=false;if(btn)btn.disabled=false}
@@ -2150,6 +2180,90 @@ document.getElementById('payday').addEventListener('click',async e=>{
 });
 document.getElementById('payBanner').addEventListener('click',()=>{setTab('month')});
 
+
+// ===== System health =====
+const HC_SAMPLES=[
+ ['SNB-AlAhli','شراء-POS\nبـSAR 12.50\nمن Test Cafe\nمدى-ابل*1234\nفي 01/01/26 10:00','expense',12.5],
+ ['SNB-AlAhli','شراء-POS\nبـSAR 46.00\nمن Test Shop\nإئتمانية **5678 (Apple Pay)\nفي 01/01/26 10:00\nالصرف المتبقي SAR 7000.00','expense',46],
+ ['SNB-AlAhli','شراء انترنت\nبـSAR 7\nمن *1111\nمن barq\nمدى-ابل *1234\nفي 01/01/26 10:00','ignore',7],
+ ['SNB-AlAhli','حوالة بين حساباتك\nصادرة من حساب *1111\nمبلغ SAR 100\nواردة إلى حساب *2222\nفي 01/01/26 10:00','ignore',100],
+ ['SNB-AlAhli','سداد بطاقة ائتمانية\nمن حساب *1111\nالى بطاقة **5678\nمبلغ SAR 25.00\nفي 01/01/26 10:00','ignore',25],
+ ['SNB-AlAhli','بطاقة ائتمانية استرجاع نقدي\nفي بطاقة **5678\nمبلغ SAR 0.32\nفي 01/01/26 10:00','cashback',0.32],
+ ['SNB-AlAhli','حوالة صادرة داخلية بSAR 35\nل*0000 شخص تجربة\n01/01/26 10:00','out',35],
+ ['SNB-AlAhli','حوالة واردة داخلية بSAR 25\nمن*0000 شخص تجربة\n01/01/26 10:00','in',25],
+ ['AlRajhiBank','شراء PoS\nعبر:0000;مدى-ابل باي\nبـSAR 15\nلـTest Market\n16:37 1/1/26','expense',15],
+ ['barq app','شراء إنترنت\nبطاقة فيزا\nمبلغ 23 USD (86.39 SAR)\nلدى TEST SERVICE\n2026-01-01 12:10','expense',86.39],
+ ['barq app','رمز التحقق: 123456\nالخدمة: حوالة صادرة\nالمبلغ: SAR 3.49','ignore',3.49],
+ ['tiqmo','شراء دولي\n9.99 SAR\nTEST.COM/BILL\nIRL\n0000 ;-MasterCard\n26-01-01\n08:58','expense',9.99]];
+function ageTxt(ms){const h=ms/36e5;if(h<1)return'قبل أقل من ساعة';if(h<2)return'قبل ساعة';if(h<24)return`قبل ${Math.floor(h)} ساعات`;const d=Math.floor(h/24);return`قبل ${d} ${d===1?'يوم':d===2?'يومين':'أيام'}`}
+function quickAlerts(){
+  const A=S.auto||{},L=[];const D=864e5;
+  if(A.url&&A.since&&Date.now()-A.since>3*D)L.push({t:'ما وصلت رسائل بنك من '+ageTxt(Date.now()-A.since).replace('قبل ',''),d:'غالباً الأتمتة في تطبيق Shortcuts وقفت — افتح «صحة النظام».'});
+  if(A.url&&A.lastBackup&&Date.now()-A.lastBackup>3*D)L.push({t:'آخر نسخة سحابية '+ageTxt(Date.now()-A.lastBackup),d:'افتح «صحة النظام» وشيّك على النسخ.'});
+  const old=(A.pending||[]).filter(p=>(Date.now()-new Date(p.date))>5*D).length;
+  if(old)L.push({t:`${old} عملية من البنك تنتظر التصنيف من أكثر من 5 أيام`,d:'صنّفها عشان يبقى السقف دقيق.'});
+  return L;
+}
+function renderAlerts(){
+  const L=quickAlerts(),sec=document.getElementById('alertSec');if(!sec)return;
+  sec.classList.toggle('hide',!L.length);
+  document.getElementById('alertIn').innerHTML=L.length?`<span class="al-i">⚠️</span><div>${L.map(x=>`<strong>${escapeHtml(x.t)}</strong><small>${escapeHtml(x.d)}</small>`).join('')}</div>`:'';
+}
+document.getElementById('alertSec').addEventListener('click',()=>{setTab('settings')});
+async function runHealth(){
+  const btn=document.getElementById('healthRun');btn.disabled=true;btn.textContent='جارٍ الفحص…';
+  const A=S.auto||{},out=[],D=864e5,add=(st,t,d)=>out.push({st,t,d});
+  // 1 storage
+  try{localStorage.setItem('__hc','1');const ok=localStorage.getItem('__hc')==='1';localStorage.removeItem('__hc');
+    const kb=Math.round((localStorage.getItem(KEY)||'').length/1024);add(ok?'ok':'bad','التخزين في الجوال',ok?`سليم — حجم بياناتك ${kb} KB`:'فيه مشكلة في الحفظ')}
+  catch(e){add('bad','التخزين في الجوال','المتصفح يمنع الحفظ — لا تستخدم التصفح الخاص')}
+  // 2 sheet connection
+  let connected=false;
+  if(!A.url||!A.key)add('bad','الاتصال بالشيت','الرابط أو المفتاح ناقص — الإعدادات ← الربط التلقائي');
+  else{const t0=performance.now();
+    try{const u=A.url.trim()+(A.url.includes('?')?'&':'?')+'k='+encodeURIComponent(A.key.trim())+'&since='+Date.now();
+      const j=await(await fetch(u,{cache:'no-store'})).json();const ms=Math.round(performance.now()-t0);
+      if(j.ok){connected=true;add('ok','الاتصال بالشيت',`متصل والمفتاح صحيح (${(ms/1000).toFixed(1)} ثانية)`)}
+      else add('bad','الاتصال بالشيت',j.err==='key'?'المفتاح غير صحيح':'رد غير متوقع من الشيت')}
+    catch(e){add('bad','الاتصال بالشيت','ما قدر يوصل — تحقق من الإنترنت')}}
+  // 3 bank messages flow
+  if(connected){lastSyncTry=0;await syncSms(false)}
+  if(!A.since)add('bad','وصول رسائل البنك','ما وصلت ولا رسالة بنك للحين. شيّك على الأتمتتين في تطبيق Shortcuts.');
+  else{const age=Date.now()-A.since;
+    add(age>7*D?'bad':age>3*D?'warn':'ok','وصول رسائل البنك','آخر رسالة وصلت الشيت '+ageTxt(age)+(age>3*D?' — افتح Shortcuts ← Automation وتأكد إن أتمتة «شراء» و«حوالة» مفعّلة وعلى Run Immediately.':''))}
+  // 4 parser
+  let bad=[];HC_SAMPLES.forEach(([f,t,k,a])=>{const p=parseSms(t,f);if(p.kind!==k||!sameAmt(p.amt,a))bad.push(k)});
+  add(bad.length?'bad':'ok','فهم رسائل البنك',bad.length?`${bad.length} من ${HC_SAMPLES.length} صيغ ما انفهمت صح`:`كل الصيغ (${HC_SAMPLES.length}) انفهمت صح: شراء، تحويل، شحن محفظة، سداد، كاش باك، رموز تحقق`);
+  // 5 inbox
+  const P=A.pending||[],oldP=P.filter(p=>(Date.now()-new Date(p.date))>5*D).length;
+  add(oldP?'warn':'ok','عمليات تنتظر التصنيف',P.length?`${P.length} عملية${oldP?` — منها ${oldP} أقدم من 5 أيام`:''}`:'ما فيه — كل شي مصنّف');
+  // 6 backup
+  if(!A.lastBackup)add('bad','النسخة السحابية','ما انرفعت ولا نسخة — الإعدادات ← نسخة احتياطية ← ارفع نسخة الحين');
+  else{const age=Date.now()-A.lastBackup;add(age>3*D?'warn':'ok','النسخة السحابية','آخر نسخة '+ageTxt(age))}
+  // 7 gold
+  if(S.gold&&S.gold.grams){if(connected)await fetchGold(true);
+    if(!S.gold.at)add('warn','سعر الذهب','ما قدر يجيب السعر — يمكن مصدر السعر واقف مؤقتاً');
+    else{const age=Date.now()-S.gold.at;add(age>2*D?'warn':'ok','سعر الذهب',`الجرام ${n(S.gold.price)} ريال — تحدّث ${ageTxt(age)}`)}}
+  // 8 data integrity
+  const m=M(),seen={},dups=[];m.expenses.forEach(e=>{if(!e.note)return;const k=e.amt+'|'+e.date+'|'+e.note;if(seen[k])dups.push(e);else seen[k]=1});
+  const nan=[...m.expenses,...m.fuel].filter(e=>!(+e.amt>0)).length;
+  add(dups.length||nan?'warn':'ok','سلامة البيانات',dups.length||nan?[dups.length?`${dups.length} عملية مكررة محتملة: ${dups.slice(0,3).map(e=>e.note+' '+n(e.amt)).join('، ')}`:'',nan?`${nan} عملية مبلغها صفر أو غير صحيح`:''].filter(Boolean).join(' · '):`${m.expenses.length+m.fuel.length} عملية هذا الشهر — ما فيه تكرار أو أخطاء`);
+  // 9 month/payday sanity
+  const pd=paydayDate();add('ok','يوم الراتب الجاي',`${pd.getDate()} ${AR_MONTHS[pd.getMonth()]} — ${['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][pd.getDay()]}`);
+  S.health={at:Date.now(),res:out};save();renderHealth();renderAlerts();
+  btn.disabled=false;btn.textContent='افحص الحين';
+  const nb=out.filter(x=>x.st==='bad').length,nw=out.filter(x=>x.st==='warn').length;
+  toast(nb?`فيه ${nb} مشكلة`:nw?`فيه ${nw} تنبيه`:'كل شي شغال ✓');
+}
+function renderHealth(){
+  const el=document.getElementById('health');if(!el||!S.health)return;const R=S.health.res;
+  const c=st=>R.filter(x=>x.st===st).length;
+  el.innerHTML=`<div class="hc-sum"><span style="color:var(--mint)">✓ ${c('ok')} سليم</span>${c('warn')?`<span style="color:var(--gold)">! ${c('warn')} تنبيه</span>`:''}${c('bad')?`<span style="color:var(--coral)">✕ ${c('bad')} مشكلة</span>`:''}</div>`+
+    R.map(x=>`<div class="hc ${x.st}"><span class="hc-i">${x.st==='ok'?'✓':x.st==='warn'?'!':'✕'}</span><div class="hc-t"><strong>${escapeHtml(x.t)}</strong><small>${escapeHtml(x.d)}</small></div></div>`).join('');
+  document.getElementById('healthAt').textContent='آخر فحص: '+fmtWhen(S.health.at);
+}
+document.getElementById('healthRun').addEventListener('click',runHealth);
+
 // ===== Loans (across months) =====
 const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
 const nameKey=s=>String(s||'').replace(/^(ال)/,'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -2187,7 +2301,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 load();
-renderAutoCfg();renderLoans();renderGoals();renderPhase2();renderCloud();setTab('today');setTimeout(()=>cloudBackup(false),4000);fetchGold(false);renderInbox();syncSms(false);
+renderAutoCfg();renderLoans();renderGoals();renderPhase2();renderCloud();renderHealth();renderAlerts();setTab('today');setTimeout(()=>cloudBackup(false),4000);fetchGold(false);renderInbox();syncSms(false);
 (()=>{const bar=document.getElementById('topbar'),hero=document.getElementById('ringWrap');
   if('IntersectionObserver' in window){new IntersectionObserver(([e])=>bar.classList.toggle('scrolled',!e.isIntersecting),{rootMargin:'-60px 0px 0px 0px'}).observe(hero)}})();
 
