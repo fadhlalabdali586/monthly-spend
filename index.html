@@ -2097,10 +2097,12 @@ document.getElementById('cloudDown').addEventListener('click',cloudRestore);
 
 // ===== Payday checklist =====
 const PAY_DAY=28;
+// الراتب يوم 28 — إذا صادف جمعة ينزل الخميس، وإذا صادف سبت ينزل الأحد
+function salaryDayOf(y,m){const d=new Date(y,m-1,Math.min(PAY_DAY,dim(y,m)));const w=d.getDay();if(w===5)d.setDate(d.getDate()-1);else if(w===6)d.setDate(d.getDate()+1);return d}
 function paydayDate(){
   const t=todayD();let y=t.getFullYear(),m=t.getMonth()+1;
-  let d=new Date(y,m-1,Math.min(PAY_DAY,dim(y,m)));
-  if(daysTo(d)< -6){const nx=ymAdd(`${y}-${pad2(m)}`,1).split('-').map(Number);d=new Date(nx[0],nx[1]-1,Math.min(PAY_DAY,dim(nx[0],nx[1])))}
+  let d=salaryDayOf(y,m);
+  if(daysTo(d)< -6){const nx=ymAdd(`${y}-${pad2(m)}`,1).split('-').map(Number);d=salaryDayOf(nx[0],nx[1])}
   return d;
 }
 function paydayRec(){
