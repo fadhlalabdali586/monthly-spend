@@ -840,7 +840,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — الإخفاء الاحترافي</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — الأهداف مربوطة</p></section>
 
 </div>
 
@@ -1175,7 +1175,27 @@ function migrate(){
   ensureFromSave();
   save();
 }
+// ربط الأهداف بالأصول (مرة وحدة): يعبّي بس الخانات الفاضية، وما يغيّر شي أنت محدده
+function linkGoalsOnce(){
+  if(S.gLinked1||!Array.isArray(S.goals))return;
+  const m=S.months&&S.months[S.current];if(!m||!Array.isArray(m.assets))return;
+  const A=id=>m.assets.find(a=>a.id===id),Ln=id=>(m.lines||[]).find(l=>l.id===id);
+  const pick=(id,name)=>S.goals.find(g=>g.id===id)||S.goals.find(g=>(g.name||'').includes(name));
+  const noLink=g=>!(Array.isArray(g.links)&&g.links.length)&&!g.link;
+  const b=pick('g_ball','البالون');
+  if(b&&A('blc')){if(noLink(b))b.links=['blc'];
+    if(!+b.target){const src=(A('blc').sub||'')+' '+((Ln('ball')||{}).dest||''),t=src.match(/الهدف\s*([\d,٬]+)/)||src.match(/(\d{1,3}(?:,\d{3})+)/);if(t)b.target=+t[1].replace(/[,٬]/g,'')}
+    if(!+b.monthly&&Ln('ball'))b.monthly=+Ln('ball').amount||0}
+  const e=pick('g_emg','الطوارئ');
+  if(e&&A('emg')){if(noLink(e))e.links=['emg'];if(!+e.target)e.target=+A('emg').val||0}
+  const w=pick('g_mar','الزواج');
+  if(w){if(noLink(w))w.links=['sav','gold'].filter(id=>A(id));
+    if(!+w.monthly&&Ln('save'))w.monthly=+Ln('save').amount||0;
+    if(!w.due)w.due='2028-07'}
+  S.gLinked1=true;save();
+}
 function ensureFromSave(){
+  try{linkGoalsOnce()}catch(e){}
   (S.loans||[]).forEach(l=>{if(!('sav' in l))l.sav=false});
   if(!Array.isArray(S.cats))return;
   const f=S.cats.find(c=>c.id==='fromsave');
