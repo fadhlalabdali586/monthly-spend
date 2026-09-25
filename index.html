@@ -66,6 +66,38 @@ section{margin-top:34px}
 section.hero{margin-top:10px}
 .sec-title{font-family:var(--num);font-size:16px;font-weight:600;margin:0 0 12px;color:var(--text)}
 /* ===== ترتيب الأقسام: مجموعات وأقسام قابلة للطي ===== */
+#lockScreen{position:fixed;inset:0;z-index:9999;display:none;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top,0px) + 9vh) 28px calc(env(safe-area-inset-bottom,0px) + 22px);
+  background:radial-gradient(130% 55% at 50% 0%,#1F2757 0%,var(--bg) 60%);color:var(--text);transition:opacity .3s ease}
+body.locked #lockScreen{display:flex}
+body.locked>*:not(#lockScreen){visibility:hidden}
+#lockScreen.leaving{opacity:0}
+.lk-head{display:flex;flex-direction:column;align-items:center;text-align:center}
+.lk-av{width:72px;height:72px;border-radius:18px;box-shadow:0 8px 26px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.06)}
+#lockScreen.setup .lk-av{opacity:.9}
+.lk-greet{margin-top:18px;font-size:17px;color:var(--muted);min-height:22px}
+.lk-name{margin-top:2px;font-size:30px;font-weight:700;letter-spacing:.2px;min-height:38px}
+#lockScreen.setup .lk-name{font-size:22px;font-weight:600;margin-top:0}
+.lk-dots{display:flex;gap:18px;justify-content:center;margin-top:34px;direction:ltr}
+.lk-dots i{width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,.14);transition:background .15s,transform .15s}
+.lk-dots i.on{background:var(--gold);transform:scale(1.08)}
+.lk-dots.shake{animation:lkShake .42s}
+@keyframes lkShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+.lk-msg{min-height:20px;margin-top:14px;font-size:13.5px;color:var(--muted);text-align:center}
+.lk-msg.bad{color:var(--coral)}
+.lk-pad{margin-top:auto;width:100%;max-width:330px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px;direction:ltr}
+.lk-key{height:66px;border:none;border-radius:22px;background:rgba(255,255,255,.07);color:var(--text);
+  font-family:var(--num);font-size:30px;font-weight:400;cursor:pointer;transition:background .12s,transform .12s}
+.lk-key:active{background:rgba(255,255,255,.18);transform:scale(.96)}
+.lk-slot{display:grid;place-items:center}
+.lk-fid,.lk-del{width:66px;height:66px;border:none;background:none;cursor:pointer;display:grid;place-items:center;border-radius:20px}
+.lk-fid{color:var(--text)}.lk-fid svg{width:42px;height:42px}
+.lk-fid:active,.lk-del:active{background:rgba(255,255,255,.08)}
+.lk-del{color:var(--muted);font-size:26px}
+.lk-foot{width:100%;max-width:330px;display:flex;justify-content:center;margin-top:18px}
+.lk-link{background:none;border:none;color:var(--gold);font-family:inherit;font-size:14.5px;cursor:pointer;padding:6px 4px}
+@media (prefers-reduced-motion:reduce){.lk-dots.shake{animation:none}}
+@media (max-height:700px){#lockScreen{padding-top:calc(env(safe-area-inset-top,0px) + 4vh)}.lk-key{height:58px}.lk-dots{margin-top:22px}}
 .grp-title{margin:30px 4px 8px;font-size:12px;font-weight:600;letter-spacing:.3px;color:var(--faint)}
 section.coll{margin-top:10px}
 section.coll>.sec-title{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;
@@ -715,6 +747,18 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
   </section>
 
   <section data-tab="settings">
+    <h2 class="sec-title">قفل اللوحة</h2>
+    <div class="card">
+      <div class="note" style="margin:0 0 12px">اللوحة تنقفل أول ما تطلع منها، وتنفتح بـ Face ID تلقائياً أو برمز دخول من 4 أرقام.</div>
+      <label class="lbl" for="lockNameIn" style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px">الاسم في شاشة الدخول</label>
+      <input id="lockNameIn" type="text" style="width:100%;margin-bottom:12px;background:var(--surface2);border:1px solid var(--line-soft);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:15px">
+      <button class="btn full" id="lockToggle" type="button">فعّل قفل الدخول</button>
+      <button class="btn ghost full" id="lockPinChange" type="button" style="margin-top:8px;display:none">غيّر رمز الدخول</button>
+      <div class="note" id="lockState" style="margin-top:10px"></div>
+    </div>
+  </section>
+
+  <section data-tab="settings">
     <h2 class="sec-title">صحة النظام</h2>
     <div class="card">
       <div id="health"><div class="empty" style="padding:6px 0 12px">اضغط «افحص الحين» عشان تتأكد إن كل شي شغال.</div></div>
@@ -788,8 +832,24 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — الترتيب الجديد</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — شاشة الدخول</p></section>
 
+</div>
+
+<div id="lockScreen" aria-hidden="true">
+  <div class="lk-head">
+    <img class="lk-av" src="icon-180.png?v=2" alt="" onerror="this.style.visibility='hidden'">
+    <div class="lk-greet" id="lkGreet"></div>
+    <div class="lk-name" id="lkName"></div>
+  </div>
+  <div class="lk-dots" id="lkDots"></div>
+  <div class="lk-msg" id="lkMsg"></div>
+  <div class="lk-pad" id="lkPad"></div>
+  <button type="button" class="lk-fid" id="lkFid" aria-label="الدخول بـ Face ID">
+    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V13a7 7 0 0 1 7-7h7M44 6h7a7 7 0 0 1 7 7v7M58 44v7a7 7 0 0 1-7 7h-7M20 58h-7a7 7 0 0 1-7-7v-7"/><path d="M22 24v5M42 24v5M32 24v12h-3M24 44c4.5 4 11.5 4 16 0"/></svg>
+  </button>
+  <button type="button" class="lk-del" id="lkDel" aria-label="مسح">⌫</button>
+  <div class="lk-foot"><button type="button" class="lk-link" id="lkForgot">نسيت رمز الدخول؟</button></div>
 </div>
 
 <div class="mask" id="mask">
@@ -1923,6 +1983,99 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncSms(f
 
 
 // ===== Tabs =====
+// ===== قفل الدخول: Face ID + رمز دخول (مثل تطبيقات البنوك) =====
+const LOCK_KEY='tawzee-lock';
+const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const unb64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+const rnd=k=>crypto.getRandomValues(new Uint8Array(k));
+const PIN_LEN=4,AR='٠١٢٣٤٥٦٧٨٩';
+function lockCfg(){try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'null')}catch(e){return null}}
+function lockSet(c){if(c)localStorage.setItem(LOCK_KEY,JSON.stringify(c));else localStorage.removeItem(LOCK_KEY)}
+function lockSupported(){return !!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext)}
+async function pinHash(pin,salt){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin));return b64(d)}
+async function lockRegister(){
+  const cred=await navigator.credentials.create({publicKey:{
+    challenge:rnd(32),rp:{name:'لوحة التوزيع'},user:{id:rnd(16),name:'tawzee',displayName:'لوحة التوزيع'},
+    pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
+  if(!cred)throw new Error('no-cred');return b64(cred.rawId);
+}
+const LS=()=>document.getElementById('lockScreen');
+let lkMode='unlock',lkPin='',lkFirst='',lkBusy=false,lkAfter=null;
+function lkGreet(){const h=new Date().getHours();return h<12?'صباح الخير،':'مساء الخير،'}
+function lkRender(){
+  const c=lockCfg()||{},L=LS();
+  document.getElementById('lkGreet').textContent=lkMode==='unlock'?lkGreet():'';
+  document.getElementById('lkName').textContent=lkMode==='unlock'?(c.name||''):lkMode==='setup1'?'أنشئ رمز الدخول':'أكّد رمز الدخول';
+  document.getElementById('lkDots').innerHTML=Array.from({length:PIN_LEN},(_,i)=>`<i class="${i<lkPin.length?'on':''}"></i>`).join('');
+  const fid=document.getElementById('lkFid');fid.style.visibility=(lkMode==='unlock'&&c.id)?'visible':'hidden';
+  document.getElementById('lkDel').style.visibility=lkPin.length?'visible':'hidden';
+  document.getElementById('lkForgot').textContent=lkMode==='unlock'?'نسيت رمز الدخول؟':'إلغاء';
+  document.getElementById('lkForgot').style.visibility=(lkMode==='unlock'&&!c.id)?'hidden':'visible';
+  L.classList.toggle('setup',lkMode!=='unlock');
+}
+function lkMsg(t,bad){const m=document.getElementById('lkMsg');m.textContent=t||'';m.classList.toggle('bad',!!bad)}
+function lkShake(){const d=document.getElementById('lkDots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake')}
+function lkShow(mode){lkMode=mode;lkPin='';lkMsg('');const L=LS();L.classList.remove('leaving');document.body.classList.add('locked');lkRender()}
+async function lkHide(){const L=LS();L.classList.add('leaving');await new Promise(r=>setTimeout(r,300));document.body.classList.remove('locked');L.classList.remove('leaving');lkPin='';
+  const c=lockCfg();if(c&&c.on&&!c.pin){lkShow('setup1');lkMsg('اختر رمز من 4 أرقام — تحتاجه لو Face ID ما اشتغل')}
+  else if(lkAfter){const f=lkAfter;lkAfter=null;f()}}
+function lockNow(){const c=lockCfg();if(c&&c.on&&!document.body.classList.contains('locked'))lkShow('unlock')}
+async function lockFaceId(){
+  const c=lockCfg();if(!c||!c.on||!c.id||lkMode!=='unlock'||lkBusy)return false;lkBusy=true;
+  try{const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb64(c.id)}],userVerification:'required',timeout:60000}});
+    if(a){c.fails=0;c.until=0;lockSet(c);lkMsg('');await lkHide();return true}}
+  catch(e){}finally{lkBusy=false}return false;
+}
+const lockUnlock=lockFaceId;
+async function lkDigit(d){
+  const c=lockCfg()||{};
+  if(lkMode==='unlock'&&c.until&&Date.now()<c.until){lkMsg('حاول بعد '+Math.ceil((c.until-Date.now())/1000)+' ثانية',true);return}
+  if(lkPin.length>=PIN_LEN)return;lkPin+=d;lkRender();if(lkPin.length<PIN_LEN)return;
+  await new Promise(r=>setTimeout(r,120));
+  if(lkMode==='setup1'){lkFirst=lkPin;lkMode='setup2';lkPin='';lkMsg('');lkRender();return}
+  if(lkMode==='setup2'){
+    if(lkPin!==lkFirst){lkShake();lkMode='setup1';lkPin='';lkFirst='';lkRender();lkMsg('الرمزين مو متطابقين — ابدأ من جديد',true);return}
+    const salt=b64(rnd(12));c.pin={salt,hash:await pinHash(lkPin,salt)};c.on=true;c.fails=0;c.until=0;lockSet(c);lkFirst='';
+    lkMsg('');await lkHide();renderLock();toast('انحفظ رمز الدخول ✓');return}
+  if(!c.pin){lkShake();lkPin='';lkRender();lkMsg('ما فيه رمز محفوظ — استخدم Face ID',true);return}
+  if(await pinHash(lkPin,c.pin.salt)===c.pin.hash){c.fails=0;c.until=0;lockSet(c);lkMsg('');await lkHide();return}
+  c.fails=(c.fails||0)+1;if(c.fails>=5){c.until=Date.now()+30000;c.fails=0}lockSet(c);
+  lkShake();lkPin='';lkRender();lkMsg(c.until&&Date.now()<c.until?'محاولات كثيرة — حاول بعد 30 ثانية':'الرمز غلط',true);
+}
+function renderLock(){
+  const c=lockCfg(),on=!!(c&&c.on),b=document.getElementById('lockToggle'),st=document.getElementById('lockState');if(!b)return;
+  b.textContent=on?'أوقف القفل':'فعّل قفل الدخول';b.className=on?'btn ghost full':'btn full';
+  document.getElementById('lockPinChange').style.display=on?'':'none';
+  document.getElementById('lockNameIn').value=(c&&c.name)||'فضل';
+  st.textContent=on?('مفعّل — '+(c.id?'Face ID':'بدون Face ID')+(c.pin?' + رمز دخول':'')+'. تنقفل اللوحة أول ما تطلع منها.'):'متوقف.';
+  const ss=document.querySelector('[data-sum="lock"]');if(ss)ss.textContent=on?'🔒 مفعّل':'متوقف';
+}
+document.getElementById('lockToggle').addEventListener('click',async()=>{
+  const c=lockCfg();
+  if(c&&c.on){if(!(await ask('توقف قفل الدخول؟')))return;lockSet(null);renderLock();toast('انوقف القفل');return}
+  const n=document.getElementById('lockNameIn').value.trim()||'فضل';let id=null;
+  if(lockSupported()){try{id=await lockRegister()}catch(e){toast('Face ID ما تفعّل — بيشتغل القفل بالرمز بس')}}
+  lockSet({on:true,id,name:n,pin:null});renderLock();lkShow('setup1');lkMsg('اختر رمز من 4 أرقام — تحتاجه لو Face ID ما اشتغل');
+});
+document.getElementById('lockPinChange').addEventListener('click',()=>{lkShow('setup1')});
+document.getElementById('lockNameIn').addEventListener('change',e=>{const c=lockCfg();if(c){c.name=e.target.value.trim();lockSet(c)}});
+document.getElementById('lkPad').addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k)lkDigit(k.dataset.k)});
+document.getElementById('lkDel').addEventListener('click',()=>{lkPin=lkPin.slice(0,-1);lkRender()});
+document.getElementById('lkFid').addEventListener('click',lockFaceId);
+document.getElementById('lkForgot').addEventListener('click',async()=>{
+  if(lkMode!=='unlock'){const c=lockCfg();if(c&&!c.pin){lockSet(null);renderLock()}document.body.classList.remove('locked');lkFirst='';return}
+  // نسيت الرمز: Face ID أولاً (أو رمز الجوال عبر iOS)، بعدها تختار رمز جديد
+  lkAfter=()=>{lkShow('setup1');lkMsg('اختر رمز دخول جديد')};
+  if(!(await lockFaceId())){lkAfter=null;lkMsg('لازم تتحقق بـ Face ID عشان تغيّر الرمز',true)}
+});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')lockNow();else if(document.body.classList.contains('locked')&&lkMode==='unlock')setTimeout(lockFaceId,300)});
+window.addEventListener('pagehide',lockNow);
+(function(){const pad=document.getElementById('lkPad');pad.innerHTML=[1,2,3,4,5,6,7,8,9].map(d=>`<button type="button" class="lk-key" data-k="${d}">${AR[d]}</button>`).join('')
+  +`<span class="lk-slot" id="lkFidSlot"></span><button type="button" class="lk-key" data-k="0">${AR[0]}</button><span class="lk-slot" id="lkDelSlot"></span>`;
+  document.getElementById('lkFidSlot').appendChild(document.getElementById('lkFid'));document.getElementById('lkDelSlot').appendChild(document.getElementById('lkDel'))})();
+lockNow();
+
 // ===== ترتيب اللوحة =====
 function setupLayout(){
   const all=[...document.querySelectorAll('section')];
@@ -1944,7 +2097,7 @@ function setupLayout(){
                  {g:'المصاريف'},'الالتزامات','البنزين','الكاش باك',
                  {g:'التقارير'},'تقرير','سجل الشهور']);
   place('goals',['الأصول','أهدافي',{g:'المستحقات والجمعية'},'المستحقات','الجمعية']);
-  place('settings',['الربط التلقائي','نسخة احتياطية','الفئات ووسائل الدفع','صحة النظام'],ver);
+  place('settings',['الربط التلقائي','نسخة احتياطية','قفل اللوحة','الفئات ووسائل الدفع','صحة النظام'],ver);
   const coll=(t,key,open)=>{
     const sec=find(t);if(!sec||sec.classList.contains('coll'))return;
     const h=sec.querySelector(':scope>h2.sec-title'),body=document.createElement('div');body.className='sec-body';
@@ -1961,10 +2114,11 @@ function setupLayout(){
   coll('الالتزامات','obl',false);coll('البنزين','fuel',false);coll('الكاش باك','cb',false);
   coll('تقرير','rep',true);coll('سجل الشهور','hist',false);
   coll('الأصول','assets',true);coll('أهدافي','goals',true);coll('المستحقات','loans',true);coll('الجمعية','jam',false);
-  coll('الربط التلقائي','auto',false);coll('نسخة احتياطية','backup',false);coll('الفئات ووسائل الدفع','cats',false);coll('صحة النظام','health',false);
+  coll('الربط التلقائي','auto',false);coll('نسخة احتياطية','backup',false);coll('قفل اللوحة','lock',false);coll('الفئات ووسائل الدفع','cats',false);coll('صحة النظام','health',false);
   document.getElementById('loanList').addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.ln-person'))return;d.open?lnOpen.add(d.dataset.p):lnOpen.delete(d.dataset.p)},true);
   const on=document.querySelector('[data-tabbtn].on');setTab(on?on.dataset.tabbtn:'today');
-  renderSums();
+  renderSums();renderLock();
+  if(document.body.classList.contains('locked'))setTimeout(lockUnlock,300);
 }
 function renderSums(){
   const set=(k,v)=>{const el=document.querySelector(`[data-sum="${k}"]`);if(el)el.textContent=v};
