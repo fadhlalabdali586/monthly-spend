@@ -886,7 +886,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — Face ID بلمسة</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — إصلاح الاستعادة</p></section>
 
 </div>
 
@@ -1855,7 +1855,9 @@ document.getElementById('impBtn').addEventListener('click',async()=>{
   migrate();
   if(!Array.isArray(S.cats)||!S.cats.length)S.cats=DEFAULT_CATS.map(c=>({...c}));
   if(!Array.isArray(S.pays)||!S.pays.length)S.pays=DEFAULT_PAYS.map(p=>({...p}));
-  save();render();b.style.display='none';toast('تمت الاستعادة');
+  save();b.style.display='none';toast('تمت الاستعادة — جاري التحديث…');
+  // نعيد تحميل اللوحة عشان كل الأقسام (السلف، الأصول، الأهداف) تنعرض من البيانات الجديدة
+  setTimeout(()=>location.reload(),700);
 });
 /* ---- عين الخصوصية: إخفاء كل الأرقام عند عرض البرنامج لأحد ---- */
 const EYE_KEY='fadhl_budget_priv';
