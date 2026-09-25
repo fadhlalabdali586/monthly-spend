@@ -886,7 +886,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — هوية «ف»</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — Face ID بلمسة</p></section>
 
 </div>
 
@@ -2156,7 +2156,7 @@ function lkRender(){
 }
 function lkMsg(t,bad){const m=document.getElementById('lkMsg');m.textContent=t||'';m.classList.toggle('bad',!!bad)}
 function lkShake(){const d=document.getElementById('lkDots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake')}
-function lkShow(mode){lkMode=mode;lkPin='';lkMsg('');LS().classList.remove('leaving');document.body.classList.add('locked');document.body.classList.remove('covered');lkRender()}
+function lkShow(mode){lkMode=mode;lkPin='';const c0=lockCfg();lkMsg(mode==='unlock'&&c0&&c0.id?'المس الشاشة للدخول بـ Face ID':'');LS().classList.remove('leaving');document.body.classList.add('locked');document.body.classList.remove('covered');lkRender()}
 async function lkHide(){const L=LS();L.classList.add('leaving');await new Promise(r=>setTimeout(r,300));document.body.classList.remove('locked');L.classList.remove('leaving');lkPin='';
   const c=lockCfg();
   if(c&&c.on&&(!c.pin||(c.pin.len||4)<PIN_NEW)){lkShow('setup1');lkMsg(c.pin?'رمز الدخول صار 6 أرقام — اختر رمزك الجديد':'اختر رمز من 6 أرقام')}
@@ -2218,6 +2218,7 @@ document.getElementById('lockNameIn').addEventListener('change',e=>{const c=lock
 document.getElementById('lkPad').addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k)lkDigit(k.dataset.k)});
 document.getElementById('lkDel').addEventListener('click',()=>{lkPin=lkPin.slice(0,-1);lkRender()});
 document.getElementById('lkFid').addEventListener('click',lockFaceId);
+document.getElementById('lockScreen').addEventListener('click',e=>{if(lkMode!=='unlock')return;if(e.target.closest('.lk-key,#lkDel,#lkForgot,#lkFid'))return;lockFaceId()});
 document.getElementById('lkForgot').addEventListener('click',async()=>{
   if(lkMode!=='unlock'){const c=lockCfg();if(c&&!c.pin){lockSet(null);renderLock()}document.body.classList.remove('locked');lkFirst='';return}
   lkAfter=()=>{lkShow('setup1');lkMsg('اختر رمز دخول جديد من 6 أرقام')};
@@ -2230,7 +2231,7 @@ document.addEventListener('visibilitychange',()=>{
   else{const c=lockCfg(),dl=((c&&c.delay)||0)*1000;
     if(!document.body.classList.contains('locked')&&Date.now()-lkHiddenAt>=dl)lkShow('unlock');
     document.body.classList.remove('covered');
-    if(document.body.classList.contains('locked')&&lkMode==='unlock')setTimeout(lockFaceId,300)}
+    }
 });
 window.addEventListener('pagehide',()=>{if(lockOn()){lkHiddenAt=Date.now();document.body.classList.add('covered')}});
 (function(){const pad=document.getElementById('lkPad');pad.innerHTML=[1,2,3,4,5,6,7,8,9].map(d=>`<button type="button" class="lk-key" data-k="${d}">${AR[d]}</button>`).join('')
@@ -2281,7 +2282,6 @@ function setupLayout(){
   const on=document.querySelector('[data-tabbtn].on');setTab(on?on.dataset.tabbtn:'today');
   try{setupHelp()}catch(e){console.error(e)}
   renderSums();renderLock();
-  if(document.body.classList.contains('locked'))setTimeout(lockUnlock,300);
 }
 function setupHelp(){
   const titleOf=h=>[...h.childNodes].filter(x=>!(x.classList&&(x.classList.contains('ss')||x.classList.contains('chev')||x.classList.contains('info-btn')))).map(x=>x.textContent).join('').trim();
