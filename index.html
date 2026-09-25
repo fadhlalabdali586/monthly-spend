@@ -1765,7 +1765,7 @@ const EYE_SHUT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 let priv=false;
 function applyPriv(){
   document.body.classList.toggle('priv',priv);
-  if(typeof pmSync==='function')setTimeout(pmSync,0);
+  setTimeout(()=>{try{pmSync()}catch(e){}},0);
   const b=document.getElementById('eye');
   b.innerHTML=priv?EYE_SHUT:EYE_OPEN;
   b.classList.toggle('on',priv);
@@ -1791,7 +1791,7 @@ const PM_SEL='.num,.gauge-big,.log-amt,.cb,.sw-big,.sw-row .v,.auto-amt,.b-amt,.
 const PM_DOTS='••••';
 let pmObs=null,pmRaf=0,pmBusy=false;
 const pmLeaves=()=>[...document.querySelectorAll(PM_SEL)].filter(el=>!el.querySelector(PM_SEL)&&!el.closest('#lockScreen'));
-function pmMaskAll(){pmBusy=true;
+function pmMaskAll(){if(!priv){pmRestoreAll();return}pmBusy=true;
   pmLeaves().forEach(el=>{if(el.classList.contains('peek'))return;const t=el.textContent;
     if(t===PM_DOTS&&el.dataset.pm)return;if(!t.trim())return;el.dataset.pm='1';el.dataset.o=t;el.textContent=PM_DOTS;el.classList.add('pm')});
   pmBusy=false}
@@ -1799,7 +1799,7 @@ function pmRestoreAll(){pmBusy=true;document.querySelectorAll('[data-pm]').forEa
 function pmSync(){
   if(priv){pmMaskAll();if(!pmObs){pmObs=new MutationObserver(()=>{if(pmBusy)return;cancelAnimationFrame(pmRaf);pmRaf=requestAnimationFrame(pmMaskAll)});
     pmObs.observe(document.body,{subtree:true,childList:true,characterData:true})}}
-  else{if(pmObs){pmObs.disconnect();pmObs=null}pmRestoreAll()}
+  else{cancelAnimationFrame(pmRaf);if(pmObs){pmObs.disconnect();pmObs=null}pmRestoreAll()}
 }
 let peekT=null,peekEl=null;
 function peekEnd(){clearTimeout(peekT);peekT=null;if(!peekEl)return;const e=peekEl;peekEl=null;
