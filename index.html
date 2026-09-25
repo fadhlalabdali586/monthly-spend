@@ -116,6 +116,26 @@ body.locked>*:not(#lockScreen){visibility:hidden}
   font:italic 700 22px/44px Georgia,serif}
 .info-modal h3{margin:0 0 10px;font-size:17px}
 .info-modal p{margin:0 0 18px;font-size:14.5px;line-height:1.8;color:var(--muted);text-align:start;white-space:pre-line}
+.set-list{padding-top:4px;padding-bottom:4px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0;border-bottom:1px solid var(--line-soft);width:100%;
+  background:none;border-left:none;border-right:none;border-top:none;color:var(--text);font-family:inherit;text-align:start;cursor:pointer}
+.set-list>.set-row:last-child,#lockOpts>.set-row:last-child{border-bottom:none}
+#lockOpts{border-bottom:1px solid var(--line-soft)}
+.set-row.col{flex-direction:column;align-items:stretch;cursor:default}
+.set-t{font-size:15px;display:flex;flex-direction:column;gap:3px}
+.set-t small{font-size:12px;color:var(--muted)}
+.set-go{color:var(--faint);font-size:18px}
+.set-in{width:44%;min-width:120px;background:var(--surface2);border:1px solid var(--line-soft);color:var(--text);border-radius:10px;padding:8px 10px;font-family:inherit;text-align:start}
+.sw{-webkit-appearance:none;appearance:none;flex:none;width:50px;height:30px;border-radius:30px;background:rgba(255,255,255,.14);position:relative;cursor:pointer;transition:background .2s;margin:0}
+.sw::after{content:'';position:absolute;top:3px;inset-inline-start:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:inset-inline-start .2s}
+.sw:checked{background:var(--mint)}
+.sw:checked::after{inset-inline-start:23px}
+.sw:disabled{opacity:.4}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:rgba(255,255,255,.06);border-radius:11px;padding:3px;margin-top:10px}
+.seg button{border:none;background:none;color:var(--muted);font-family:inherit;font-size:12.5px;padding:8px 2px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--surface2);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+body.covered::before{content:'';position:fixed;inset:0;z-index:9998;background:var(--bg) url("icon-180.png?v=2") center/72px no-repeat}
+body.covered>*:not(#lockScreen){visibility:hidden}
 .grp-title{margin:30px 4px 8px;font-size:12px;font-weight:600;letter-spacing:.3px;color:var(--faint)}
 section.coll{margin-top:10px}
 section.coll>.sec-title{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;-webkit-user-select:none;
@@ -775,14 +795,17 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
 
   <section data-tab="settings">
     <h2 class="sec-title">قفل اللوحة</h2>
-    <div class="card">
-      <div class="note" style="margin:0 0 12px">اللوحة تنقفل أول ما تطلع منها، وتنفتح بـ Face ID تلقائياً أو برمز دخول من 4 أرقام.</div>
-      <label class="lbl" for="lockNameIn" style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px">الاسم في شاشة الدخول</label>
-      <input id="lockNameIn" type="text" style="width:100%;margin-bottom:12px;background:var(--surface2);border:1px solid var(--line-soft);color:var(--text);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:15px">
-      <button class="btn full" id="lockToggle" type="button">فعّل قفل الدخول</button>
-      <button class="btn ghost full" id="lockPinChange" type="button" style="margin-top:8px;display:none">غيّر رمز الدخول</button>
-      <div class="note" id="lockState" style="margin-top:10px"></div>
-      <label class="chk" style="display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px;color:var(--text);white-space:normal"><input type="checkbox" id="privAutoChk">أخفِ الأرقام تلقائياً كل ما أفتح اللوحة</label>
+    <div class="card set-list">
+      <div class="note">اللوحة تنقفل حسب المدة اللي تختارها بعد ما تطلع منها، وتنفتح بـ Face ID تلقائياً أو برمز الدخول (6 أرقام). لو نسيت الرمز، تقدر تغيّره بعد التحقق بـ Face ID.</div>
+      <label class="set-row"><span class="set-t">قفل الدخول</span><input type="checkbox" class="sw" id="swLock"></label>
+      <div id="lockOpts">
+        <label class="set-row"><span class="set-t">Face ID<small id="fidSub"></small></span><input type="checkbox" class="sw" id="swFid"></label>
+        <div class="set-row col"><span class="set-t">القفل التلقائي</span><div class="seg" id="lockDelay"></div></div>
+        <button type="button" class="set-row link" id="lockPinChange"><span class="set-t">تغيير رمز الدخول</span><span class="set-go">‹</span></button>
+        <div class="set-row"><span class="set-t">الاسم في شاشة الدخول</span><input id="lockNameIn" type="text" class="set-in"></div>
+        <button type="button" class="set-row link" id="lockNowBtn"><span class="set-t" style="color:var(--gold)">اقفل الحين</span></button>
+      </div>
+      <label class="set-row"><span class="set-t">أخفِ الأرقام تلقائياً<small>كل ما ترجع للوحة تلقاها مخفية</small></span><input type="checkbox" class="sw" id="privAutoChk"></label>
     </div>
   </section>
 
@@ -860,7 +883,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — واجهة نظيفة</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — إعدادات القفل</p></section>
 
 </div>
 
@@ -2095,12 +2118,13 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncSms(f
 // منع التكبير بالقرص (pinch) — التطبيق يتصرف مثل برامج الجوال
 ['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
-// ===== قفل الدخول: Face ID + رمز دخول (مثل تطبيقات البنوك) =====
+// ===== قفل الدخول: رمز من 6 أرقام + Face ID + قفل تلقائي حسب المدة (مثل تطبيقات البنوك) =====
 const LOCK_KEY='tawzee-lock';
 const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const unb64=s=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
 const rnd=k=>crypto.getRandomValues(new Uint8Array(k));
-const PIN_LEN=4,AR='٠١٢٣٤٥٦٧٨٩';
+const PIN_NEW=6,AR='٠١٢٣٤٥٦٧٨٩';
+const LOCK_DELAYS=[[0,'فوراً'],[60,'بعد دقيقة'],[300,'بعد 5 دقائق'],[900,'بعد 15 دقيقة']];
 function lockCfg(){try{return JSON.parse(localStorage.getItem(LOCK_KEY)||'null')}catch(e){return null}}
 function lockSet(c){if(c)localStorage.setItem(LOCK_KEY,JSON.stringify(c));else localStorage.removeItem(LOCK_KEY)}
 function lockSupported(){return !!(window.PublicKeyCredential&&navigator.credentials&&window.isSecureContext)}
@@ -2113,26 +2137,29 @@ async function lockRegister(){
   if(!cred)throw new Error('no-cred');return b64(cred.rawId);
 }
 const LS=()=>document.getElementById('lockScreen');
-let lkMode='unlock',lkPin='',lkFirst='',lkBusy=false,lkAfter=null;
+let lkMode='unlock',lkPin='',lkFirst='',lkBusy=false,lkAfter=null,lkHiddenAt=0;
+const lkLen=()=>{if(lkMode!=='unlock')return PIN_NEW;const c=lockCfg();return (c&&c.pin&&c.pin.len)||4};
 function lkGreet(){const h=new Date().getHours();return h<12?'صباح الخير،':'مساء الخير،'}
 function lkRender(){
   const c=lockCfg()||{},L=LS();
   document.getElementById('lkGreet').textContent=lkMode==='unlock'?lkGreet():'';
   document.getElementById('lkName').textContent=lkMode==='unlock'?(c.name||''):lkMode==='setup1'?'أنشئ رمز الدخول':'أكّد رمز الدخول';
-  document.getElementById('lkDots').innerHTML=Array.from({length:PIN_LEN},(_,i)=>`<i class="${i<lkPin.length?'on':''}"></i>`).join('');
-  const fid=document.getElementById('lkFid');fid.style.visibility=(lkMode==='unlock'&&c.id)?'visible':'hidden';
+  document.getElementById('lkDots').innerHTML=Array.from({length:lkLen()},(_,i)=>`<i class="${i<lkPin.length?'on':''}"></i>`).join('');
+  document.getElementById('lkFid').style.visibility=(lkMode==='unlock'&&c.id)?'visible':'hidden';
   document.getElementById('lkDel').style.visibility=lkPin.length?'visible':'hidden';
-  document.getElementById('lkForgot').textContent=lkMode==='unlock'?'نسيت رمز الدخول؟':'إلغاء';
-  document.getElementById('lkForgot').style.visibility=(lkMode==='unlock'&&!c.id)?'hidden':'visible';
+  const f=document.getElementById('lkForgot');f.textContent=lkMode==='unlock'?'نسيت رمز الدخول؟':'إلغاء';
+  f.style.visibility=(lkMode==='unlock'&&!c.id)?'hidden':'visible';
   L.classList.toggle('setup',lkMode!=='unlock');
 }
 function lkMsg(t,bad){const m=document.getElementById('lkMsg');m.textContent=t||'';m.classList.toggle('bad',!!bad)}
 function lkShake(){const d=document.getElementById('lkDots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake')}
-function lkShow(mode){lkMode=mode;lkPin='';lkMsg('');const L=LS();L.classList.remove('leaving');document.body.classList.add('locked');lkRender()}
+function lkShow(mode){lkMode=mode;lkPin='';lkMsg('');LS().classList.remove('leaving');document.body.classList.add('locked');document.body.classList.remove('covered');lkRender()}
 async function lkHide(){const L=LS();L.classList.add('leaving');await new Promise(r=>setTimeout(r,300));document.body.classList.remove('locked');L.classList.remove('leaving');lkPin='';
-  const c=lockCfg();if(c&&c.on&&!c.pin){lkShow('setup1');lkMsg('اختر رمز من 4 أرقام — تحتاجه لو Face ID ما اشتغل')}
+  const c=lockCfg();
+  if(c&&c.on&&(!c.pin||(c.pin.len||4)<PIN_NEW)){lkShow('setup1');lkMsg(c.pin?'رمز الدخول صار 6 أرقام — اختر رمزك الجديد':'اختر رمز من 6 أرقام')}
   else if(lkAfter){const f=lkAfter;lkAfter=null;f()}}
-function lockNow(){const c=lockCfg();if(c&&c.on&&!document.body.classList.contains('locked'))lkShow('unlock')}
+function lockOn(){const c=lockCfg();return !!(c&&c.on)}
+function lockNow(){if(lockOn()&&!document.body.classList.contains('locked'))lkShow('unlock')}
 async function lockFaceId(){
   const c=lockCfg();if(!c||!c.on||!c.id||lkMode!=='unlock'||lkBusy)return false;lkBusy=true;
   try{const a=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{type:'public-key',id:unb64(c.id)}],userVerification:'required',timeout:60000}});
@@ -2141,50 +2168,68 @@ async function lockFaceId(){
 }
 const lockUnlock=lockFaceId;
 async function lkDigit(d){
-  const c=lockCfg()||{};
+  const c=lockCfg()||{},L=lkLen();
   if(lkMode==='unlock'&&c.until&&Date.now()<c.until){lkMsg('حاول بعد '+Math.ceil((c.until-Date.now())/1000)+' ثانية',true);return}
-  if(lkPin.length>=PIN_LEN)return;lkPin+=d;lkRender();if(lkPin.length<PIN_LEN)return;
+  if(lkPin.length>=L)return;lkPin+=d;lkRender();if(lkPin.length<L)return;
   await new Promise(r=>setTimeout(r,120));
   if(lkMode==='setup1'){lkFirst=lkPin;lkMode='setup2';lkPin='';lkMsg('');lkRender();return}
   if(lkMode==='setup2'){
     if(lkPin!==lkFirst){lkShake();lkMode='setup1';lkPin='';lkFirst='';lkRender();lkMsg('الرمزين مو متطابقين — ابدأ من جديد',true);return}
-    const salt=b64(rnd(12));c.pin={salt,hash:await pinHash(lkPin,salt)};c.on=true;c.fails=0;c.until=0;lockSet(c);lkFirst='';
+    const salt=b64(rnd(12));c.pin={salt,hash:await pinHash(lkPin,salt),len:PIN_NEW};c.on=true;c.fails=0;c.until=0;lockSet(c);lkFirst='';
     lkMsg('');await lkHide();renderLock();toast('انحفظ رمز الدخول ✓');return}
   if(!c.pin){lkShake();lkPin='';lkRender();lkMsg('ما فيه رمز محفوظ — استخدم Face ID',true);return}
   if(await pinHash(lkPin,c.pin.salt)===c.pin.hash){c.fails=0;c.until=0;lockSet(c);lkMsg('');await lkHide();return}
   c.fails=(c.fails||0)+1;if(c.fails>=5){c.until=Date.now()+30000;c.fails=0}lockSet(c);
   lkShake();lkPin='';lkRender();lkMsg(c.until&&Date.now()<c.until?'محاولات كثيرة — حاول بعد 30 ثانية':'الرمز غلط',true);
 }
+// ----- إعدادات القفل -----
 function renderLock(){
-  const c=lockCfg(),on=!!(c&&c.on),b=document.getElementById('lockToggle'),st=document.getElementById('lockState');if(!b)return;
-  b.textContent=on?'أوقف القفل':'فعّل قفل الدخول';b.className=on?'btn ghost full':'btn full';
-  document.getElementById('lockPinChange').style.display=on?'':'none';
+  const c=lockCfg(),on=!!(c&&c.on),box=document.getElementById('lockOpts');if(!box)return;
+  document.getElementById('swLock').checked=on;box.style.display=on?'':'none';
+  const f=document.getElementById('swFid');f.checked=!!(c&&c.id);f.disabled=!lockSupported();
+  document.getElementById('fidSub').textContent=lockSupported()?(c&&c.id?'يفتح تلقائياً بوجهك':'الفتح بالرمز بس'):'ما يدعمه هالجهاز';
+  const dl=(c&&c.delay!=null)?c.delay:0;
+  document.getElementById('lockDelay').innerHTML=LOCK_DELAYS.map(([v,t])=>`<button type="button" data-dl="${v}" class="${v===dl?'on':''}">${t}</button>`).join('');
   document.getElementById('lockNameIn').value=(c&&c.name)||'فضل';
-  st.textContent=on?('مفعّل — '+(c.id?'Face ID':'بدون Face ID')+(c.pin?' + رمز دخول':'')+'. تنقفل اللوحة أول ما تطلع منها.'):'متوقف.';
-  const ss=document.querySelector('[data-sum="lock"]');if(ss)ss.textContent=on?'🔒 مفعّل':'متوقف';
+  const ss=document.querySelector('[data-sum="lock"]');if(ss)ss.textContent=on?'🔒 '+LOCK_DELAYS.find(x=>x[0]===dl)[1]:'متوقف';
 }
-document.getElementById('lockToggle').addEventListener('click',async()=>{
+document.getElementById('swLock').addEventListener('change',async e=>{
   const c=lockCfg();
-  if(c&&c.on){if(!(await ask('توقف قفل الدخول؟')))return;lockSet(null);renderLock();toast('انوقف القفل');return}
-  const n=document.getElementById('lockNameIn').value.trim()||'فضل';let id=null;
-  if(lockSupported()){try{id=await lockRegister()}catch(e){toast('Face ID ما تفعّل — بيشتغل القفل بالرمز بس')}}
-  lockSet({on:true,id,name:n,pin:null});renderLock();lkShow('setup1');lkMsg('اختر رمز من 4 أرقام — تحتاجه لو Face ID ما اشتغل');
+  if(!e.target.checked){if(c&&c.on&&!(await ask('توقف قفل الدخول؟'))){e.target.checked=true;return}lockSet(null);renderLock();toast('انوقف القفل');return}
+  let id=null;if(lockSupported()){try{id=await lockRegister()}catch(err){toast('Face ID ما تفعّل — تقدر تفعّله بعدين')}}
+  lockSet({on:true,id,name:document.getElementById('lockNameIn').value.trim()||'فضل',pin:null,delay:0});renderLock();
+  lkShow('setup1');lkMsg('اختر رمز من 6 أرقام');
 });
-document.getElementById('lockPinChange').addEventListener('click',()=>{lkShow('setup1')});
+document.getElementById('swFid').addEventListener('change',async e=>{
+  const c=lockCfg();if(!c)return;
+  if(e.target.checked){try{c.id=await lockRegister();lockSet(c);toast('تفعّل Face ID ✓')}catch(err){e.target.checked=false;toast('ما تفعّل Face ID')}}
+  else{c.id=null;lockSet(c);toast('انوقف Face ID — الفتح بالرمز')}
+  renderLock();
+});
+document.getElementById('lockDelay').addEventListener('click',e=>{const b=e.target.closest('[data-dl]');if(!b)return;const c=lockCfg();if(!c)return;c.delay=+b.dataset.dl;lockSet(c);renderLock()});
+document.getElementById('lockPinChange').addEventListener('click',()=>{lkShow('setup1');lkMsg('اختر رمز من 6 أرقام')});
+document.getElementById('lockNowBtn').addEventListener('click',()=>{lockNow()});
+document.getElementById('lockNameIn').addEventListener('change',e=>{const c=lockCfg();if(c){c.name=e.target.value.trim();lockSet(c)}});
 (function(){const c=document.getElementById('privAutoChk');try{c.checked=localStorage.getItem('tawzee-privauto')==='1'}catch(e){}
   c.addEventListener('change',()=>{try{localStorage.setItem('tawzee-privauto',c.checked?'1':'0')}catch(e){};toast(c.checked?'بتفتح اللوحة والأرقام مخفية':'انلغى الإخفاء التلقائي')})})();
-document.getElementById('lockNameIn').addEventListener('change',e=>{const c=lockCfg();if(c){c.name=e.target.value.trim();lockSet(c)}});
 document.getElementById('lkPad').addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k)lkDigit(k.dataset.k)});
 document.getElementById('lkDel').addEventListener('click',()=>{lkPin=lkPin.slice(0,-1);lkRender()});
 document.getElementById('lkFid').addEventListener('click',lockFaceId);
 document.getElementById('lkForgot').addEventListener('click',async()=>{
   if(lkMode!=='unlock'){const c=lockCfg();if(c&&!c.pin){lockSet(null);renderLock()}document.body.classList.remove('locked');lkFirst='';return}
-  // نسيت الرمز: Face ID أولاً (أو رمز الجوال عبر iOS)، بعدها تختار رمز جديد
-  lkAfter=()=>{lkShow('setup1');lkMsg('اختر رمز دخول جديد')};
+  lkAfter=()=>{lkShow('setup1');lkMsg('اختر رمز دخول جديد من 6 أرقام')};
   if(!(await lockFaceId())){lkAfter=null;lkMsg('لازم تتحقق بـ Face ID عشان تغيّر الرمز',true)}
 });
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')lockNow();else if(document.body.classList.contains('locked')&&lkMode==='unlock')setTimeout(lockFaceId,300)});
-window.addEventListener('pagehide',lockNow);
+// القفل التلقائي: لما تطلع نغطي الشاشة (عشان ما تبان في قائمة التطبيقات)، ولما ترجع نقفل إذا تجاوزت المدة
+document.addEventListener('visibilitychange',()=>{
+  if(!lockOn())return;
+  if(document.visibilityState==='hidden'){lkHiddenAt=Date.now();if(!document.body.classList.contains('locked'))document.body.classList.add('covered')}
+  else{const c=lockCfg(),dl=((c&&c.delay)||0)*1000;
+    if(!document.body.classList.contains('locked')&&Date.now()-lkHiddenAt>=dl)lkShow('unlock');
+    document.body.classList.remove('covered');
+    if(document.body.classList.contains('locked')&&lkMode==='unlock')setTimeout(lockFaceId,300)}
+});
+window.addEventListener('pagehide',()=>{if(lockOn()){lkHiddenAt=Date.now();document.body.classList.add('covered')}});
 (function(){const pad=document.getElementById('lkPad');pad.innerHTML=[1,2,3,4,5,6,7,8,9].map(d=>`<button type="button" class="lk-key" data-k="${d}">${AR[d]}</button>`).join('')
   +`<span class="lk-slot" id="lkFidSlot"></span><button type="button" class="lk-key" data-k="0">${AR[0]}</button><span class="lk-slot" id="lkDelSlot"></span>`;
   document.getElementById('lkFidSlot').appendChild(document.getElementById('lkFid'));document.getElementById('lkDelSlot').appendChild(document.getElementById('lkDel'))})();
