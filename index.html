@@ -2303,11 +2303,16 @@ async function runHealth(){
   const nb=out.filter(x=>x.st==='bad').length,nw=out.filter(x=>x.st==='warn').length;
   toast(nb?`فيه ${nb} مشكلة`:nw?`فيه ${nw} تنبيه`:'كل شي شغال ✓');
 }
+let hcOpen=false;
 function renderHealth(){
   const el=document.getElementById('health');if(!el||!S.health)return;const R=S.health.res;
   const c=st=>R.filter(x=>x.st===st).length;
   el.innerHTML=`<div class="hc-sum"><span style="color:var(--mint)">✓ ${c('ok')} سليم</span>${c('warn')?`<span style="color:var(--gold)">! ${c('warn')} تنبيه</span>`:''}${c('bad')?`<span style="color:var(--coral)">✕ ${c('bad')} مشكلة</span>`:''}</div>`+
-    R.map(x=>`<div class="hc ${x.st}"><span class="hc-i">${x.st==='ok'?'✓':x.st==='warn'?'!':'✕'}</span><div class="hc-t"><strong>${escapeHtml(x.t)}</strong><small>${escapeHtml(x.d)}</small></div></div>`).join('');
+    (()=>{const row=x=>`<div class="hc ${x.st}"><span class="hc-i">${x.st==='ok'?'✓':x.st==='warn'?'!':'✕'}</span><div class="hc-t"><strong>${escapeHtml(x.t)}</strong><small>${escapeHtml(x.d)}</small></div></div>`;
+      const probs=R.filter(x=>x.st!=='ok'),shown=hcOpen?R:probs;
+      const more=hcOpen?'إخفاء التفاصيل ▲':(probs.length?`عرض الكل (${R.length}) ▼`:'عرض التفاصيل ▼');
+      return shown.map(row).join('')+`<button type="button" id="hcToggle" style="display:block;margin:6px auto 10px;background:none;border:none;color:var(--muted);font-family:inherit;font-size:13px;cursor:pointer">${more}</button>`})();
+  document.getElementById('hcToggle').onclick=()=>{hcOpen=!hcOpen;renderHealth()};
   document.getElementById('healthAt').textContent='آخر فحص: '+fmtWhen(S.health.at);
 }
 document.getElementById('healthRun').addEventListener('click',runHealth);
