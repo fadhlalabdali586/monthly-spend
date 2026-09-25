@@ -524,13 +524,14 @@ textarea{width:100%;height:120px;background:var(--surface2);border:1px solid var
 .f-in.mono{font-family:var(--num);direction:ltr;text-align:left}
 .f-in:focus{outline:none;border-color:var(--gold)}
 
-body.priv .num,body.priv .gauge-big,body.priv .log-amt,body.priv .log-note,body.priv .cb,body.priv .sw-big,
-body.priv .sw-row .v,body.priv .auto-amt,body.priv .b-amt,body.priv .b-name small,body.priv .salary-input,
-body.priv .gross,body.priv .ticks,body.priv .stats b,body.priv .cbcell .v,body.priv .cbcell .cap,body.priv .brk b,
-body.priv .proxyline b,body.priv .asset input,body.priv .asset .an small,body.priv .net b,body.priv .hist-row .hs,
-body.priv .balance span:last-child,body.priv #box,body.priv .f-in.mono,body.priv #edNote,body.priv .mini,
-body.priv .lg b,body.priv .donut-center b,body.priv .ps-a,body.priv .rep-big,body.priv .rc-v,body.priv .rm b,body.priv .rep-kpis b,body.priv .ob-a,body.priv .ob-sum b,body.priv .jam-kv b,body.priv .jam-msg,body.priv .g-nums,body.priv .g-eta,body.priv .gv,body.priv .ib-a,body.priv .sl-row b,body.priv #autoUrl,body.priv #autoKey{
-  filter:blur(8px);user-select:none;pointer-events:none;transition:filter .18s ease}
+/* ===== وضع الخصوصية: الأرقام تتبدّل بنقاط (بنفس الحجم واللون)، والضغط المطوّل يكشف الرقم لحظياً ===== */
+.pm{letter-spacing:.1em;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;animation:privIn .22s ease}
+.pm.peek{letter-spacing:normal;animation:none}
+@keyframes privIn{from{opacity:0}to{opacity:1}}
+body.priv .ticks{opacity:0}
+body.priv .asset input,body.priv .salary-input,body.priv .f-in.mono,body.priv #autoUrl,body.priv #autoKey{-webkit-text-fill-color:transparent;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='62' height='10'%3E%3Cg fill='%23F2EEE3'%3E%3Ccircle cx='5' cy='5' r='4'/%3E%3Ccircle cx='22' cy='5' r='4'/%3E%3Ccircle cx='39' cy='5' r='4'/%3E%3Ccircle cx='56' cy='5' r='4'/%3E%3C/g%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 12px center;background-size:auto 9px}
+body.priv #box,body.priv .g-eta,body.priv .jam-msg{filter:blur(7px);user-select:none;pointer-events:none;transition:filter .18s ease}
 body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 @media (prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
 
@@ -761,6 +762,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <button class="btn full" id="lockToggle" type="button">فعّل قفل الدخول</button>
       <button class="btn ghost full" id="lockPinChange" type="button" style="margin-top:8px;display:none">غيّر رمز الدخول</button>
       <div class="note" id="lockState" style="margin-top:10px"></div>
+      <label class="chk" style="display:flex;gap:10px;align-items:center;margin-top:14px;font-size:14px;color:var(--text);white-space:normal"><input type="checkbox" id="privAutoChk">أخفِ الأرقام تلقائياً كل ما أفتح اللوحة</label>
     </div>
   </section>
 
@@ -838,7 +840,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — بدون زوم</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — الإخفاء الاحترافي</p></section>
 
 </div>
 
@@ -1763,6 +1765,7 @@ const EYE_SHUT='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 let priv=false;
 function applyPriv(){
   document.body.classList.toggle('priv',priv);
+  if(typeof pmSync==='function')setTimeout(pmSync,0);
   const b=document.getElementById('eye');
   b.innerHTML=priv?EYE_SHUT:EYE_OPEN;
   b.classList.toggle('on',priv);
@@ -1774,10 +1777,37 @@ document.getElementById('eye').addEventListener('click',()=>{
   priv=!priv;
   try{localStorage.setItem(EYE_KEY,priv?'1':'0')}catch(e){}
   applyPriv();
-  toast(priv?'الأرقام مخفية':'الأرقام ظاهرة');
+  toast(priv?'الأرقام مخفية — اضغط مطوّلاً على أي رقم عشان تشوفه':'الأرقام ظاهرة');
 });
 try{priv=localStorage.getItem(EYE_KEY)==='1'}catch(e){}
+// الإخفاء التلقائي: كل ما تفتح اللوحة تبدأ والأرقام مخفية
+const PRIV_AUTO='tawzee-privauto';
+const privAuto=()=>{try{return localStorage.getItem(PRIV_AUTO)==='1'}catch(e){return false}};
+if(privAuto())priv=true;
 applyPriv();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&privAuto()){priv=true;applyPriv()}});
+// ===== محرك الإخفاء: يبدّل نص الأرقام بنقاط ويحفظ الأصل، ويتابع أي تحديث للأرقام وهي مخفية =====
+const PM_SEL='.num,.gauge-big,.log-amt,.cb,.sw-big,.sw-row .v,.auto-amt,.b-amt,.gross,.stats b,.cbcell .v,.cbcell .cap,.brk b,.proxyline b,.net b,.hist-row .hs,.balance span:last-child,.lg b,.donut-center b,.ps-a,.rep-big,.rc-v,.rm b,.rep-kpis b,.ob-a,.ob-sum b,.jam-kv b,.gv,.ib-a,.sl-row b,.loan-sum b,.mini,.sec-title .ss[data-sum=assets],.sec-title .ss[data-sum=loans],.sec-title .ss[data-sum=fuel],.sec-title .ss[data-sum=salary]';
+const PM_DOTS='••••';
+let pmObs=null,pmRaf=0,pmBusy=false;
+const pmLeaves=()=>[...document.querySelectorAll(PM_SEL)].filter(el=>!el.querySelector(PM_SEL)&&!el.closest('#lockScreen'));
+function pmMaskAll(){pmBusy=true;
+  pmLeaves().forEach(el=>{if(el.classList.contains('peek'))return;const t=el.textContent;
+    if(t===PM_DOTS&&el.dataset.pm)return;if(!t.trim())return;el.dataset.pm='1';el.dataset.o=t;el.textContent=PM_DOTS;el.classList.add('pm')});
+  pmBusy=false}
+function pmRestoreAll(){pmBusy=true;document.querySelectorAll('[data-pm]').forEach(el=>{el.textContent=el.dataset.o||'';delete el.dataset.pm;delete el.dataset.o;el.classList.remove('pm','peek')});pmBusy=false}
+function pmSync(){
+  if(priv){pmMaskAll();if(!pmObs){pmObs=new MutationObserver(()=>{if(pmBusy)return;cancelAnimationFrame(pmRaf);pmRaf=requestAnimationFrame(pmMaskAll)});
+    pmObs.observe(document.body,{subtree:true,childList:true,characterData:true})}}
+  else{if(pmObs){pmObs.disconnect();pmObs=null}pmRestoreAll()}
+}
+let peekT=null,peekEl=null;
+function peekEnd(){clearTimeout(peekT);peekT=null;if(!peekEl)return;const e=peekEl;peekEl=null;
+  setTimeout(()=>{if(!priv)return;pmBusy=true;e.dataset.o=e.textContent;e.textContent=PM_DOTS;e.classList.remove('peek');pmBusy=false},1100)}
+document.addEventListener('pointerdown',e=>{if(!priv)return;const t=e.target.closest('[data-pm]');if(!t)return;
+  peekT=setTimeout(()=>{peekEl=t;pmBusy=true;t.classList.add('peek');t.textContent=t.dataset.o||'';pmBusy=false;if(navigator.vibrate)navigator.vibrate(8)},320)});
+['pointerup','pointercancel','scroll'].forEach(ev=>document.addEventListener(ev,peekEnd,true));
+document.addEventListener('contextmenu',e=>{if(priv&&e.target.closest('[data-pm]'))e.preventDefault()});
 
 // ===== SMS parser (auto logging) =====
 const SMS_OWN=/fadhl|فضل|بين حساباتك|own account|حساب\S*\s*بين/i;
@@ -2068,6 +2098,8 @@ document.getElementById('lockToggle').addEventListener('click',async()=>{
   lockSet({on:true,id,name:n,pin:null});renderLock();lkShow('setup1');lkMsg('اختر رمز من 4 أرقام — تحتاجه لو Face ID ما اشتغل');
 });
 document.getElementById('lockPinChange').addEventListener('click',()=>{lkShow('setup1')});
+(function(){const c=document.getElementById('privAutoChk');try{c.checked=localStorage.getItem('tawzee-privauto')==='1'}catch(e){}
+  c.addEventListener('change',()=>{try{localStorage.setItem('tawzee-privauto',c.checked?'1':'0')}catch(e){};toast(c.checked?'بتفتح اللوحة والأرقام مخفية':'انلغى الإخفاء التلقائي')})})();
 document.getElementById('lockNameIn').addEventListener('change',e=>{const c=lockCfg();if(c){c.name=e.target.value.trim();lockSet(c)}});
 document.getElementById('lkPad').addEventListener('click',e=>{const k=e.target.closest('[data-k]');if(k)lkDigit(k.dataset.k)});
 document.getElementById('lkDel').addEventListener('click',()=>{lkPin=lkPin.slice(0,-1);lkRender()});
