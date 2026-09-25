@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -533,6 +533,12 @@ body.priv .lg b,body.priv .donut-center b,body.priv .ps-a,body.priv .rep-big,bod
   filter:blur(8px);user-select:none;pointer-events:none;transition:filter .18s ease}
 body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
 @media (prefers-reduced-motion:reduce){*,*::before{transition:none!important;animation:none!important}}
+
+/* منع الزوم: iOS يكبّر أي خانة خطها أقل من 16px، والضغط المزدوج يكبّر الصفحة */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+button,a,label,summary,.lk-key{touch-action:manipulation}
+input,select,textarea{font-size:16px!important}
+input[type=checkbox],input[type=radio]{font-size:inherit!important}
 </style>
 </head>
 <body>
@@ -832,7 +838,7 @@ body.priv .btn.warn,body.priv #expBtn{opacity:.45;pointer-events:none}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — شاشة الدخول</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — بدون زوم</p></section>
 
 </div>
 
@@ -1983,6 +1989,9 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){syncSms(f
 
 
 // ===== Tabs =====
+// منع التكبير بالقرص (pinch) — التطبيق يتصرف مثل برامج الجوال
+['gesturestart','gesturechange','gestureend'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault()},{passive:false});
 // ===== قفل الدخول: Face ID + رمز دخول (مثل تطبيقات البنوك) =====
 const LOCK_KEY='tawzee-lock';
 const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
