@@ -840,7 +840,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — الأهداف مربوطة</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 25/9 — حساب الأهداف</p></section>
 
 </div>
 
@@ -2230,9 +2230,9 @@ function renderGoals(){
     if(!t)eta='اضغط وحدد المبلغ المستهدف.';
     else if(done)eta='<span class="ok">مكتمل ✓</span>';
     else{
-      if(+g.monthly>0){const k=Math.ceil(rem/g.monthly);eta+=`بوتيرتك (<span class="num">${n(g.monthly)}</span> شهرياً) توصل في <b>${monthLabel(addMonths(k))}</b> — بعد ${k} شهر.`}
+      if(+g.monthly>0){const k=Math.ceil(rem/g.monthly);eta+=`بوتيرتك (<span class="num">${n(g.monthly)}</span> شهرياً) توصل في <b>${monthLabel(addMonths(k-1))}</b> — بعد ${k} تحويل.`}
       else eta+='حدد كم تحوّل له شهرياً عشان أحسب موعد الوصول.';
-      if(g.due){const ml=Math.max(monthsUntil(g.due),1),need=rem/ml,ok=+g.monthly>=need-0.5;
+      if(g.due){const ml=Math.max(monthsUntil(g.due)+1,1),need=rem/ml,ok=+g.monthly>=need-0.5;
         eta+=`<br>عشان توصل في <b>${monthLabel(g.due)}</b> تحتاج <span class="num ${ok?'ok':'warn'}">${n(Math.ceil(need))}</span> شهرياً ${ok?'<span class="ok">✓ ماشي صح</span>':'<span class="warn">— ناقصك '+n(Math.ceil(need-(+g.monthly||0)))+'</span>'}`}
     }
     return`<div class="goal card${done?' done':''}" data-goal="${g.id}"><div class="g-top"><strong>${escapeHtml(g.name)}</strong><span class="g-pct">${t?Math.floor(pct*100)+'%':'—'}</span></div>
