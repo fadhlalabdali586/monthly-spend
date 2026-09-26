@@ -651,6 +651,14 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <select id="pay"></select>
       </div>
       <input class="note-in" id="eNote" type="text" placeholder="ملاحظة — من أين ولماذا (اختياري)">
+      <button class="more-btn" id="splitBtn" type="button">＋ دفعت بطريقتين (مثلاً كاش + شبكة)</button>
+      <div id="splitBox" class="hide">
+        <div class="entry sub">
+          <select id="pay2"></select>
+          <input id="amt2" type="number" inputmode="decimal" placeholder="كم دفعت بهذي الطريقة">
+        </div>
+        <div class="note" style="margin-top:7px">اكتب المبلغ الكامل فوق مع طريقة الدفع الأولى، وهنا الجزء اللي دفعته بالطريقة الثانية. تنسجل عمليتين بنفس الفئة، وكل وحدة بطريقتها — فالكاش باك والمطابقة مع رسائل البنك يطلعون صح.</div>
+      </div>
       <button class="more-btn" id="moreBtn" type="button">＋ تقسيم الفاتورة / كاش باك مختلف</button>
       <div id="moreBox" class="hide">
         <div class="entry sub">
@@ -912,7 +920,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — دخل إضافي</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — دفع بطريقتين</p></section>
 
 </div>
 
@@ -1392,7 +1400,7 @@ function fillSelects(){
   document.getElementById('edCat').innerHTML=opts;
   const pOpts=S.pays.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
   const ph='<option value="">— اختر طريقة الدفع —</option>';
-  ['pay','fPay','edPay'].forEach(id=>{
+  ['pay','pay2','fPay','edPay'].forEach(id=>{
     const el=document.getElementById(id),c=el.value;
     el.innerHTML=(id==='edPay'?'':ph)+pOpts;
     el.value=(c&&S.pays.some(p=>p.id===c))?c:(id==='edPay'?el.value:'');
@@ -1689,6 +1697,10 @@ function addExp(){
   const other=+$('eOther').value||0;
   if(other<0||other>=v){toast('حصة غيرك لازم تكون أقل من المبلغ الكامل');return}
   const cbrIn=$('eCbr').value;
+  const split=!$('splitBox').classList.contains('hide')&&+$('amt2').value>0,a2=split?+$('amt2').value:0,pay2=$('pay2').value;
+  if(split){if(!pay2){toast('اختر طريقة الدفع الثانية');$('pay2').focus();return}
+    if(pay2===pay){toast('الطريقتين نفس الشي — اختر طريقة ثانية');return}
+    if(a2>=v-other){toast('الجزء الثاني لازم يكون أقل من المبلغ');return}}
   const date=$('eDate').value||defaultDate();
   const note=$('eNote').value.trim(),who=$('eWho').value.trim();
   const base=Date.now(),mk=(id,cat,amt,nt)=>{
@@ -1697,17 +1709,21 @@ function addExp(){
     return o;
   };
   const cat=$('cat').value;
-  M().expenses.push(mk(base,cat,v-other,other?`${note?note+' — ':''}حصتي من ${n(v)}`:note));
+  const own=v-other,tag=split?`دفعتين من ${n(own)}`:'';
+  const nt1=[other?`${note?note+' — ':''}حصتي من ${n(v)}`:note,tag].filter(Boolean).join(' — ');
+  const e1=mk(base,cat,own-a2,nt1);if(split)e1.grp=base+'';M().expenses.push(e1);
+  if(split){const e2=mk(base+2,cat,a2,[note,tag].filter(Boolean).join(' — '));e2.pay=pay2;e2.grp=base+'';if(!payOf(pay2)||!payOf(pay2).cb)delete e2.cbr;M().expenses.push(e2)}
   if(other){
     const px=mk(base+1,proxyCat(),other,`حصة ${who||'غيري'}${note?' — '+note:''}`);
     px.got=false;M().expenses.push(px);
   }
-  ['amt','eNote','eOther','eWho','eCbr'].forEach(id=>$(id).value='');
+  ['amt','eNote','eOther','eWho','eCbr','amt2'].forEach(id=>$(id).value='');$('pay2').value='';$('splitBox').classList.add('hide');
   $('pay').value='';$('pay').classList.add('need');
   save();refreshAll();
   const fr=document.querySelector(`[data-ed="${base}"]`);if(fr)fr.classList.add('fresh');
-  toast(other?`انسجلت حصتك ${n(v-other)} + ${n(other)} نيابة`:'تمت الإضافة');
+  toast(split?`انسجلت: ${n(own-a2)} ${payName(pay)} + ${n(a2)} ${payName(pay2)}`:other?`انسجلت حصتك ${n(v-other)} + ${n(other)} نيابة`:'تمت الإضافة');
 }
+document.getElementById('splitBtn').addEventListener('click',()=>{document.getElementById('splitBox').classList.toggle('hide')});
 document.getElementById('moreBtn').addEventListener('click',()=>{
   const b=document.getElementById('moreBox');b.classList.toggle('hide');
 });
