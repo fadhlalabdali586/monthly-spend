@@ -137,6 +137,22 @@ body.locked>*:not(#lockScreen){visibility:hidden}
 .seg button.on{background:var(--surface2);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 body.covered::before{content:'';position:fixed;inset:0;z-index:9998;background:var(--bg) url("icon-180.png?v=4") center/72px no-repeat}
 body.covered>*:not(#lockScreen){visibility:hidden}
+#mask{z-index:1000}
+.inc-btn{margin-top:8px}
+.inc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.inc-chips button{border:1px solid var(--line-soft);background:none;color:var(--muted);font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:20px;cursor:pointer}
+.inc-dest{display:flex;flex-direction:column;gap:6px}
+.inc-dest label{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line-soft);border-radius:12px;cursor:pointer;font-size:14.5px}
+.inc-dest label small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.inc-dest label:has(input:checked){border-color:var(--gold);background:rgba(201,139,78,.08)}
+.inc-dest input{accent-color:var(--gold);width:18px;height:18px;flex:none}
+.inc-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
+.inc-row:last-child{border-bottom:none}
+.inc-row .inc-n{flex:1;min-width:0}
+.inc-row .inc-n strong{display:block;font-size:14.5px;font-weight:500}
+.inc-row .inc-n small{font-size:12px;color:var(--muted)}
+.inc-row b{color:var(--mint);font-family:var(--num);font-weight:600}
+.cap-extra{display:block;font-size:12px;color:var(--mint);margin-top:2px}
 .grp-title{margin:30px 4px 8px;font-size:12px;font-weight:600;letter-spacing:.3px;color:var(--faint);display:flex;align-items:center;gap:10px}
 .grp-title::after{content:'';flex:1;height:1.5px;background:linear-gradient(90deg,transparent,rgba(201,139,78,.45));border-radius:2px}
 .grp-title::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px rgba(201,139,78,.18);order:2}
@@ -623,6 +639,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <i id="gaugeFill"></i>
       <div class="brk" id="brk"></div>
       <button class="btn ghost full manual-toggle" id="manualToggle" type="button">＋ إضافة يدوية (كاش أو عملية ما وصلت)</button>
+      <button class="btn ghost full manual-toggle inc-btn" id="incOpen" type="button">＋ دخل إضافي (عائد، بونص، مكافأة)</button>
       <div id="manualBox" class="hide">
       <div class="entry">
         <select id="cat"></select>
@@ -770,6 +787,15 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   </section>
 
   <section data-tab="month">
+    <h2 class="sec-title">دخل إضافي</h2>
+    <div class="card">
+      <div class="note">أي مبلغ يجيك برّا الراتب — عائد حساب، بونص، مكافأة، هدية. تختار وين يروح: يزيد سقف مصروف هذا الشهر، أو يضاف لأصل (الادخار مثلاً) وينعكس تلقائياً على الأهداف المربوطة فيه.</div>
+      <div id="incList"></div>
+      <button class="btn ghost full" id="incAdd" type="button" style="margin-top:10px">＋ دخل إضافي</button>
+    </div>
+  </section>
+
+  <section data-tab="month">
     <h2 class="sec-title">كم أحوّل للادخار</h2>
     <div class="sweep">
       <div class="sw-big"><span class="num" id="swNow">—</span> <span class="rial">ريال</span></div>
@@ -886,7 +912,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — إصلاح الاستعادة</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — دخل إضافي</p></section>
 
 </div>
 
@@ -977,6 +1003,26 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <button class="btn" id="jSave" type="button">حفظ</button>
     </div>
     <button class="btn danger full" id="jDel" type="button">حذف الجمعية</button>
+  </div>
+</div>
+
+<div class="mask" id="incMask">
+  <div class="modal">
+    <h3 id="incTitle">دخل إضافي</h3>
+    <div class="f-lbl">المبلغ</div>
+    <input class="f-in mono" id="incAmt" type="number" inputmode="decimal" placeholder="0">
+    <div class="f-lbl">وش هو؟</div>
+    <input class="f-in" id="incNote" type="text" placeholder="مثلاً: عائد حساب الطوارئ">
+    <div class="inc-chips" id="incChips"></div>
+    <div class="f-lbl">وين يروح؟</div>
+    <div class="inc-dest" id="incDest"></div>
+    <div class="f-lbl">التاريخ</div>
+    <input class="f-in mono" id="incDate" type="date">
+    <div class="row2" style="margin-top:16px">
+      <button class="btn ghost" id="incCancel" type="button">إلغاء</button>
+      <button class="btn" id="incSave" type="button">حفظ</button>
+    </div>
+    <button class="btn danger full hide" id="incDel" type="button">حذف</button>
   </div>
 </div>
 
@@ -1270,6 +1316,7 @@ function reconcileAssets(){
   const m=S&&S.months&&S.months[S.current];if(!m||m.closed||!Array.isArray(m.assets))return;
   const want={};
   (m.expenses||[]).forEach(e=>{const c=catOf(e.cat);if(c&&c.asset&&m.assets.some(a=>a.id===c.asset))want[e.id]={a:c.asset,v:+e.amt||0}});
+  incList(m).forEach(x=>{const a=(x.dest||'').startsWith('asset:')?x.dest.slice(6):'';if(a&&m.assets.some(z=>z.id===a))want[x.id]={a,v:-(+x.amt||0)}});
   const led=m.aLedger||{},r2=x=>Math.round(x*100)/100;
   const adj=(id,d)=>{const a=m.assets.find(x=>x.id===id);if(a)a.val=r2((+a.val||0)+d)};
   Object.keys(led).forEach(k=>{const o=led[k],w=want[k];if(!w||w.a!==o.a||w.v!==o.v)adj(o.a,o.v)});
@@ -1401,7 +1448,7 @@ function renderSweep(){
   const m=M();
   const others=m.lines.filter(l=>l.kind!=='pre'&&l.id!=='save').reduce((s,l)=>s+ +l.amount,0);
   const now=Math.max(0,+m.salary-others);
-  const cl=m.lines.find(l=>l.kind==='cap'),cap=cl?+cl.amount:0;
+  const cap=capOf(m);
   const fl=m.lines.find(l=>l.kind==='fuel'),fcap=fl?+fl.amount:0;
   const spent=capSpent(m);
   const fspent=fl?m.fuel.reduce((s,e)=>s+e.amt,0):0;
@@ -1431,6 +1478,10 @@ function daysInfo(){
   const dim=new Date(y,mo,0).getDate();
   return{day:same?today.getDate():dim,dim};
 }
+// ===== الدخل الإضافي =====
+const incList=m=>Array.isArray(m&&m.income)?m.income:[];
+const incCapSum=m=>incList(m).filter(x=>x.dest==='cap').reduce((s,x)=>s+(+x.amt||0),0);
+function capOf(m){const cl=m.lines.find(l=>l.kind==='cap');return (cl?+cl.amount:0)+incCapSum(m)}
 function capSpent(m){
   const noFuelLine=!m.lines.some(l=>l.kind==='fuel');
   return m.expenses.filter(e=>inCap(e.cat)).reduce((s,e)=>s+e.amt,0)
@@ -1460,7 +1511,7 @@ function opRow(e,attr){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 function renderCap(){
-  const m=M(),cl=m.lines.find(l=>l.kind==='cap'),cap=cl?+cl.amount:0;
+  const m=M(),cap=capOf(m);
   const spent=capSpent(m);
   const left=cap-spent,pct=cap?Math.min(spent/cap*100,100):0;
   const R=document.getElementById('remain');
@@ -1611,7 +1662,7 @@ function refreshFlow(){
   if(sa&&sv)sa.textContent=n(sv.amount);
   drawBalance();renderSweep();
 }
-function refreshAll(){if(typeof renderSums==='function')setTimeout(renderSums,0);renderCap();renderFuel();renderCB();if(typeof renderAssets==='function')renderAssets();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans();if(typeof renderGoals==='function')renderGoals();if(typeof renderPhase2==='function')renderPhase2()}
+function refreshAll(){if(typeof renderIncome==='function')setTimeout(renderIncome,0);if(typeof renderSums==='function')setTimeout(renderSums,0);renderCap();renderFuel();renderCB();if(typeof renderAssets==='function')renderAssets();renderHist();renderSweep();if(typeof renderLoans==='function')renderLoans();if(typeof renderGoals==='function')renderGoals();if(typeof renderPhase2==='function')renderPhase2()}
 
 document.getElementById('salary').addEventListener('input',e=>{M().salary=+e.target.value||0;save();refreshFlow()});
 document.getElementById('bus').addEventListener('input',e=>{
@@ -2064,7 +2115,7 @@ function renderInbox(){
     if(p.kind==='in'){
       const mt=proxyMatches(p);
       return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a in">+${n(p.amt)}</b></div>${meta}
-        <div class="ib-act">${loanMatches(p).map(l=>`<button class="btn sm" data-lnmatch="${l.id}">✓ سداد سلفة: ${escapeHtml(l.person)} (${n(lnRemain(l))})</button>`).join('')}${mt.map(e=>`<button class="btn sm" data-match="${e.id}">✓ رجعت: ${escapeHtml(e.note||catName(e.cat))}</button>`).join('')}<button class="btn ghost sm" data-skip>تم</button></div></div>`;
+        <div class="ib-act">${loanMatches(p).map(l=>`<button class="btn sm" data-lnmatch="${l.id}">✓ سداد سلفة: ${escapeHtml(l.person)} (${n(lnRemain(l))})</button>`).join('')}${mt.map(e=>`<button class="btn sm" data-match="${e.id}">✓ رجعت: ${escapeHtml(e.note||catName(e.cat))}</button>`).join('')}<button class="btn sm" data-inc-in>＋ دخل إضافي</button><button class="btn ghost sm" data-skip>تم</button></div></div>`;
     }
     return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a">${n(p.amt)}</b></div>${meta}
       ${p.raw?`<div class="log-note" style="white-space:normal">${escapeHtml(p.raw)}</div>`:''}
@@ -2095,7 +2146,8 @@ document.getElementById('inbox').addEventListener('click',e=>{
   if(e.target.closest('[data-ok]')){
     const cat=row.querySelector('[data-cat]').value;if(!cat){toast('اختر الفئة أولاً');return}
     ibApprove(id,cat);save();refreshAll();renderInbox();toast('تم التسجيل');
-  }else if(e.target.closest('[data-skip]')){ibRemove(id);save();renderInbox()}
+  }else if(e.target.closest('[data-inc-in]')){const p=S.auto.pending.find(x=>x.id===id);if(p)openInc(null,{pid:id,amt:p.amt,date:p.date,note:p.label.replace(/^وارد من\s*/,'')})}
+  else if(e.target.closest('[data-skip]')){ibRemove(id);save();renderInbox()}
   else if(e.target.closest('[data-lnmatch]')){const p=S.auto.pending.find(x=>x.id===id);const a=payLoan(e.target.closest('[data-lnmatch]').dataset.lnmatch,p.amt,p.date);ibRemove(id);save();refreshAll();renderInbox();toast(a?'انسجل سداد السلفة':'تم')}
   else{const mb=e.target.closest('[data-match]');if(mb){const x=M().expenses.find(z=>z.id===mb.dataset.match);if(x)x.got=true;ibRemove(id);save();refreshAll();renderInbox();toast('تم — رجع المبلغ')}}
 });
@@ -2258,7 +2310,7 @@ function setupLayout(){
     if(tail)par.insertBefore(tail,mark);
     mark.remove();
   };
-  place('month',[{g:'الدخل والتوزيع'},'يوم الراتب','الراتب وتوزيعه','توزيع يوم الراتب','كم أحوّل للادخار',
+  place('month',[{g:'الدخل والتوزيع'},'يوم الراتب','الراتب وتوزيعه','دخل إضافي','توزيع يوم الراتب','كم أحوّل للادخار',
                  {g:'المصاريف'},'الالتزامات','البنزين','الكاش باك',
                  {g:'التقارير'},'تقرير','سجل الشهور']);
   place('goals',['الأصول','أهدافي',{g:'المستحقات والجمعية'},'المستحقات','الجمعية']);
@@ -2275,7 +2327,7 @@ function setupLayout(){
     const isOpen=key in UI?UI[key]:open;sec.classList.toggle('closed',!isOpen);
     h.addEventListener('click',()=>{sec.classList.toggle('closed');UI[key]=!sec.classList.contains('closed');saveUI()});
   };
-  coll('يوم الراتب','pay',true);coll('الراتب وتوزيعه','salary',false);coll('توزيع يوم الراتب','split',false);coll('كم أحوّل للادخار','tosave',false);
+  coll('يوم الراتب','pay',true);coll('الراتب وتوزيعه','salary',false);coll('دخل إضافي','income',false);coll('توزيع يوم الراتب','split',false);coll('كم أحوّل للادخار','tosave',false);
   coll('الالتزامات','obl',false);coll('البنزين','fuel',false);coll('الكاش باك','cb',false);
   coll('تقرير','rep',true);coll('سجل الشهور','hist',false);
   coll('الأصول','assets',true);coll('أهدافي','goals',true);coll('المستحقات','loans',true);coll('الجمعية','jam',false);
@@ -2302,6 +2354,59 @@ document.addEventListener('click',e=>{const b=e.target.closest('.info-btn');if(!
   document.getElementById('infoSheet').classList.add('on')},true);
 document.getElementById('infoOk').addEventListener('click',()=>document.getElementById('infoSheet').classList.remove('on'));
 document.getElementById('infoSheet').addEventListener('click',e=>{if(e.target.id==='infoSheet')e.currentTarget.classList.remove('on')});
+let incEditing=null,incFromPending=null;
+function incDestOptions(){
+  const m=M(),o=[{v:'cap',t:'مصروف هذا الشهر',d:'يزيد سقف المصروف بنفس المبلغ'}];
+  (m.assets||[]).filter(a=>!['gold','zamb','jamb'].includes(a.id)).forEach(a=>{
+    const gs=(S.goals||[]).filter(g=>gLinksOf(g).includes(a.id)).map(g=>g.name);
+    o.push({v:'asset:'+a.id,t:a.name,d:gs.length?'ينضاف للرصيد — ويحسب في هدف: '+gs.join('، '):'ينضاف لرصيد الحساب'})});
+  (S.goals||[]).filter(g=>!gLinksOf(g).length).forEach(g=>o.push({v:'goal:'+g.id,t:'هدف: '+g.name,d:'ينضاف لرصيد الهدف'}));
+  return o;
+}
+function incDestName(d){const x=incDestOptions().find(o=>o.v===d);return x?x.t:'—'}
+function openInc(id,pre){
+  const m=M(),x=id?incList(m).find(z=>z.id===id):null,$=k=>document.getElementById(k);
+  incEditing=x;incFromPending=pre&&pre.pid||null;
+  $('incTitle').textContent=x?'تعديل الدخل':'دخل إضافي';
+  $('incAmt').value=x?x.amt:(pre&&pre.amt)||'';$('incNote').value=x?x.note:(pre&&pre.note)||'';
+  $('incDate').value=x?x.date:(pre&&pre.date)||isoDay();
+  const sel=x?x.dest:(S.incLast||'cap');
+  $('incDest').innerHTML=incDestOptions().map(o=>`<label><input type="radio" name="incDest" value="${o.v}"${o.v===sel?' checked':''}><span>${escapeHtml(o.t)}<small>${escapeHtml(o.d)}</small></span></label>`).join('');
+  if(!document.querySelector('#incDest input:checked')){const f=document.querySelector('#incDest input');if(f)f.checked=true}
+  const tags=[...new Set(Object.values(S.months).flatMap(mm=>incList(mm).map(z=>z.note)).filter(Boolean))].slice(-4);
+  $('incChips').innerHTML=[...new Set(['عائد حساب الطوارئ','بونص','مكافأة',...tags])].map(t=>`<button type="button" data-t="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join('');
+  $('incDel').classList.toggle('hide',!x);$('incMask').classList.add('on');
+}
+function closeInc(){document.getElementById('incMask').classList.remove('on');incEditing=null;incFromPending=null}
+function renderIncome(){
+  const el=document.getElementById('incList');if(!el)return;const L=[...incList(M())].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  el.innerHTML=L.length?L.map(x=>`<div class="inc-row" data-inc="${x.id}"><div class="inc-n"><strong>${escapeHtml(x.note||'دخل إضافي')}</strong><small>${shortD(x.date)} · ${escapeHtml(incDestName(x.dest))}</small></div><b class="num">+${n(x.amt)}</b></div>`).join('')
+    :'<div class="empty" style="padding:8px 0 4px">ما سجلت دخل إضافي هذا الشهر.</div>';
+  const ex=incCapSum(M()),cl=document.getElementById('capLbl');
+  if(cl){let t=cl.parentNode.querySelector('.cap-extra');if(ex>0){if(!t){t=document.createElement('span');t.className='cap-extra';cl.parentNode.appendChild(t)}t.innerHTML=`منها <span class="num">${n(ex)}</span> دخل إضافي`}else if(t)t.remove()}
+}
+document.getElementById('incOpen').addEventListener('click',()=>openInc(null));
+document.getElementById('incAdd').addEventListener('click',()=>openInc(null));
+document.getElementById('incList').addEventListener('click',e=>{const r=e.target.closest('[data-inc]');if(r)openInc(r.dataset.inc)});
+document.getElementById('incChips').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)document.getElementById('incNote').value=b.dataset.t});
+document.getElementById('incCancel').addEventListener('click',closeInc);
+document.getElementById('incMask').addEventListener('click',e=>{if(e.target.id==='incMask')closeInc()});
+document.getElementById('incSave').addEventListener('click',()=>{
+  const $=k=>document.getElementById(k),amt=+$('incAmt').value;if(!amt||amt<=0){toast('أدخل مبلغ صحيح');return}
+  const r=document.querySelector('#incDest input:checked');if(!r){toast('اختر وين يروح المبلغ');return}
+  const m=M();if(m.closed){toast('الشهر مقفل');return}if(!Array.isArray(m.income))m.income=[];
+  const date=$('incDate').value||isoDay(),note=$('incNote').value.trim();
+  if(incEditing){Object.assign(incEditing,{amt:+amt.toFixed(2),date,note,dest:r.value})}
+  else m.income.push({id:'inc_'+Date.now(),amt:+amt.toFixed(2),date,note,dest:r.value});
+  S.incLast=r.value;
+  if(incFromPending){ibRemove(incFromPending);renderInbox()}
+  const was=!!incEditing;closeInc();save();refreshAll();renderIncome();
+  toast(was?'انحفظ التعديل':(r.value==='cap'?'انضاف لسقف الشهر ✓':'انضاف ✓'));
+});
+document.getElementById('incDel').addEventListener('click',async()=>{
+  if(!incEditing)return;if(!await ask('حذف هذا الدخل؟ بيرجع السقف أو الرصيد مثل ما كان.'))return;
+  const m=M(),id=incEditing.id;m.income=incList(m).filter(x=>x.id!==id);closeInc();save();refreshAll();renderIncome();toast('انحذف');
+});
 function renderSums(){
   const set=(k,v)=>{const el=document.querySelector(`[data-sum="${k}"]`);if(el)el.textContent=v};
   try{const m=M();
@@ -2309,6 +2414,7 @@ function renderSums(){
     set('loans',n((S.loans||[]).reduce((s,l)=>s+Math.max(0,lnRemain(l)),0)));
     set('fuel',n((m.fuel||[]).reduce((s,f)=>s+(+f.amt||0),0)));
     set('salary',n(+m.salary||0));
+    {const t=incList(m).reduce((s,x)=>s+(+x.amt||0),0);set('income',t?'+'+n(t):'')}
     set('goals',(S.goals||[]).length?String((S.goals||[]).length):'');
     set('hist',Object.keys(S.months||{}).length+' شهر');
     if(S.health&&S.health.res){const R=S.health.res,b=R.filter(x=>x.st!=='ok').length;set('health',b?b+' تنبيه':'✓ سليم')}
@@ -2341,7 +2447,8 @@ const ymOf=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 function addMonths(k){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()+k);return ymOf(d)}
 function monthsUntil(ym){const [y,mo]=ym.split('-').map(Number),d=new Date();return (y-d.getFullYear())*12+(mo-(d.getMonth()+1))}
 const gLinksOf=g=>Array.isArray(g.links)?g.links:(g.link?[g.link]:[]);
-function goalCur(g){const L=gLinksOf(g);if(L.length)return L.reduce((s,id)=>{const a=M().assets.find(x=>x.id===id);return s+(a?+a.val||0:0)},0);return +g.cur||0}
+function goalCur(g){const L=gLinksOf(g);if(L.length)return L.reduce((s,id)=>{const a=M().assets.find(x=>x.id===id);return s+(a?+a.val||0:0)},0);
+  const extra=Object.values(S.months||{}).reduce((s,m)=>s+incList(m).filter(x=>x.dest==='goal:'+g.id).reduce((t,x)=>t+(+x.amt||0),0),0);return (+g.cur||0)+extra}
 const goalSrc=g=>{const L=gLinksOf(g);return L.length>1?'من: '+L.map(id=>{const a=M().assets.find(x=>x.id===id);return a?escapeHtml(a.name):''}).filter(Boolean).join(' + '):''};
 function renderGoals(){
   const el=document.getElementById('goals');if(!el)return;
@@ -2425,7 +2532,7 @@ function monthStats(m){
   if(noFuelLine&&m.fuel.length){cats.fuel=(cats.fuel||0)+m.fuel.reduce((s,f)=>s+f.amt,0);tx+=m.fuel.length}
   const spent=Object.values(cats).reduce((s,v)=>s+v,0);
   const merch={};m.expenses.forEach(e=>{if(!inCap(e.cat)||!e.note)return;const k=e.note.split(/—|\(/)[0].replace(/^حصتي من\s*/,'').trim().slice(0,28);if(!k)return;(merch[k]=merch[k]||{v:0,c:0}).v+=e.amt;merch[k].c++});
-  const cap=+((m.lines.find(l=>l.kind==='cap')||{}).amount||0);
+  const cap=capOf(m);
   const saved=m.lines.filter(l=>l.kind==='save').reduce((s,l)=>s+ +l.amount,0);
   return{cats,spent,tx,merch,cap,saved,salary:+m.salary||0};
 }
