@@ -138,6 +138,20 @@ body.locked>*:not(#lockScreen){visibility:hidden}
 body.covered::before{content:'';position:fixed;inset:0;z-index:9998;background:var(--bg) url("icon-180.png?v=4") center/72px no-repeat}
 body.covered>*:not(#lockScreen){visibility:hidden}
 #mask{z-index:1000}
+.pockets{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;cursor:pointer}
+.pk{background:rgba(255,255,255,.035);border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px}
+.pk-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12.5px;color:var(--muted)}
+.pk-h small{font-size:11px;color:var(--faint)}
+.pk-v{font-family:var(--num);font-size:20px;font-weight:600;margin-top:4px}
+.pk-v small{font-size:12px;color:var(--muted);font-weight:400}
+.pk-bar{height:5px;border-radius:5px;background:rgba(255,255,255,.08);margin-top:8px;overflow:hidden}
+.pk-bar i{display:block;height:100%;border-radius:5px}
+.pk.low{border-color:rgba(232,118,95,.5)}
+.pk-tip{grid-column:1/-1;font-size:12.5px;color:var(--muted);padding:2px 2px 0}
+.pk-tip b{color:var(--text)}
+.pk-sum{font-size:13px;color:var(--muted);margin-top:8px}
+.pk-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pk-sug button{border:1px solid var(--line-soft);background:none;color:var(--muted);font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:20px;cursor:pointer}
 .inc-btn{margin-top:8px}
 .inc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .inc-chips button{border:1px solid var(--line-soft);background:none;color:var(--muted);font-family:inherit;font-size:12.5px;padding:5px 11px;border-radius:20px;cursor:pointer}
@@ -636,6 +650,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <div><b class="num" id="pace">—</b><span>حد الأسبوع</span></div>
       </div>
       <div class="pace-line" id="paceLine"></div>
+      <div class="pockets" id="pockets"></div>
       <i id="gaugeFill"></i>
       <div class="brk" id="brk"></div>
       <button class="btn ghost full manual-toggle" id="manualToggle" type="button">＋ إضافة يدوية (كاش أو عملية ما وصلت)</button>
@@ -920,7 +935,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — دفع بطريقتين</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 26/9 — جيبين للسقف</p></section>
 
 </div>
 
@@ -1011,6 +1026,20 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <button class="btn" id="jSave" type="button">حفظ</button>
     </div>
     <button class="btn danger full" id="jDel" type="button">حذف الجمعية</button>
+  </div>
+</div>
+
+<div class="mask" id="pkMask">
+  <div class="modal">
+    <h3>توزيع السقف على البطاقتين</h3>
+    <div class="f-lbl">البطاقة الائتمانية (الأساسية — كاش باك)</div>
+    <input class="f-in mono" id="pkCredit" type="number" inputmode="decimal">
+    <div class="pk-sum" id="pkSum"></div>
+    <div class="pk-sug" id="pkSug"></div>
+    <div class="row2" style="margin-top:16px">
+      <button class="btn ghost" id="pkCancel" type="button">إلغاء</button>
+      <button class="btn" id="pkSave" type="button">حفظ</button>
+    </div>
   </div>
 </div>
 
@@ -1562,6 +1591,8 @@ function renderCap(){
           else t+=' ✓ بمعدلك الحالي يكفيك.'}}
       pl2.className='pace-line '+cls;pl2.style.display='block';pl2.innerHTML=t}
     else pl2.style.display='none'}catch(e){pl2.style.display='none'}}
+
+  try{renderPockets(m,cap)}catch(e){}
 
   const log=document.getElementById('log');
   const all=[...m.expenses].sort(byDate),shown=logAll?all:all.slice(0,8);
@@ -2423,6 +2454,47 @@ document.getElementById('incDel').addEventListener('click',async()=>{
   if(!incEditing)return;if(!await ask('حذف هذا الدخل؟ بيرجع السقف أو الرصيد مثل ما كان.'))return;
   const m=M(),id=incEditing.id;m.income=incList(m).filter(x=>x.id!==id);closeInc();save();refreshAll();renderIncome();toast('انحذف');
 });
+// ===== جيبين للسقف: البطاقة الائتمانية + حساب المصروف =====
+const isCreditPay=id=>{const p=payOf(id);return !!(p&&p.cb)};
+function pocketSpent(m){
+  const noFuelLine=!m.lines.some(l=>l.kind==='fuel');let c=0,a=0;
+  m.expenses.filter(e=>inCap(e.cat)).forEach(e=>{isCreditPay(e.pay)?c+=e.amt:a+=e.amt});
+  if(noFuelLine)m.fuel.forEach(e=>{isCreditPay(e.pay)?c+=e.amt:a+=e.amt});
+  return{c,a};
+}
+function renderPockets(m,cap){
+  const el=document.getElementById('pockets');if(!el)return;
+  if(S.creditCap==null||!(cap>0)){el.innerHTML=`<div class="pk-tip" style="text-align:center;padding:6px 0">＋ وزّع السقف على البطاقة الائتمانية وحساب المصروف</div>`;return}
+  const cc=Math.min(+S.creditCap||0,cap),ac=cap-cc,{c,a}=pocketSpent(m),lc=cc-c,la=ac-a;
+  const bar=(sp,cp,col)=>`<div class="pk-bar"><i style="width:${cp>0?Math.min(sp/cp*100,100).toFixed(1):100}%;background:${sp>cp?'var(--coral)':col}"></i></div>`;
+  const box=(t,sub,l,sp,cp,col)=>`<div class="pk${l<cp*0.1?' low':''}"><div class="pk-h"><span>${t}</span><small>${sub}</small></div><div class="pk-v num" style="color:${l<0?'var(--coral)':'var(--text)'}">${n(l)} <small>من ${n(cp)}</small></div>${bar(sp,cp,col)}</div>`;
+  let tip='';
+  if(la<0&&lc>0)tip=`حساب المصروف تعدّى بـ <b class="num">${n(-la)}</b> — غطّيها من حصة الائتمانية، واستخدم الائتمانية وين ما قدرت.`;
+  else if(lc<0&&la>0)tip=`الائتمانية تعدّت بـ <b class="num">${n(-lc)}</b> — تنخصم من حصة حساب المصروف.`;
+  else if(la>=0&&la<ac*0.15&&lc>0)tip='حساب المصروف قرب يخلص — استخدم الائتمانية في أي مكان يقبل فيزا أو ماستركارد.';
+  el.innerHTML=box('💳 الائتمانية','بنزين + فيزا/ماستر',lc,c,cc,'var(--gold)')+box('🏦 حساب المصروف','مدى، برق، كاش، تحويل',la,a,ac,'var(--mint)')+(tip?`<div class="pk-tip">${tip}</div>`:'');
+}
+function openPockets(){
+  const m=M(),cap=capOf(m),$=k=>document.getElementById(k);
+  const prev=Object.keys(S.months).sort().filter(k=>k!==S.current).slice(-1)[0],pm=prev?S.months[prev]:null;
+  const base=pm&&pm.expenses.length?pm:m,sp=pocketSpent(base),tot=sp.c+sp.a;
+  const hist=tot>0?Math.round(cap*sp.c/tot/50)*50:0;
+  $('pkCredit').value=S.creditCap!=null?S.creditCap:(hist||Math.round(cap*0.7/50)*50);
+  const sug=[];if(hist)sug.push([hist,`حسب صرفك الفعلي (${Math.round(sp.c/tot*100)}%)`]);
+  sug.push([Math.round(cap*0.75/50)*50,'75%'],[Math.round(cap*0.65/50)*50,'65%']);
+  $('pkSug').innerHTML=sug.filter((x,i)=>sug.findIndex(y=>y[0]===x[0])===i).map(([v,t])=>`<button type="button" data-v="${v}">${n(v)} — ${t}</button>`).join('');
+  pkSum();$('pkMask').classList.add('on');
+}
+function pkSum(){const cap=capOf(M()),v=Math.min(Math.max(+document.getElementById('pkCredit').value||0,0),cap);
+  document.getElementById('pkSum').innerHTML=`حساب المصروف (مدى، برق، كاش، تحويلات): <b class="num">${n(cap-v)}</b> — المجموع <span class="num">${n(cap)}</span>`}
+document.getElementById('pockets').addEventListener('click',openPockets);
+document.getElementById('pkCredit').addEventListener('input',pkSum);
+document.getElementById('pkSug').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(b){document.getElementById('pkCredit').value=b.dataset.v;pkSum()}});
+document.getElementById('pkCancel').addEventListener('click',()=>document.getElementById('pkMask').classList.remove('on'));
+document.getElementById('pkMask').addEventListener('click',e=>{if(e.target.id==='pkMask')e.currentTarget.classList.remove('on')});
+document.getElementById('pkSave').addEventListener('click',()=>{const cap=capOf(M()),v=+document.getElementById('pkCredit').value;
+  if(!(v>=0)||v>cap){toast('المبلغ لازم يكون بين 0 و'+n(cap));return}
+  S.creditCap=+v.toFixed(2);save();refreshAll();document.getElementById('pkMask').classList.remove('on');toast('انحفظ التوزيع')});
 function renderSums(){
   const set=(k,v)=>{const el=document.querySelector(`[data-sum="${k}"]`);if(el)el.textContent=v};
   try{const m=M();
