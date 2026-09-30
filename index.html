@@ -1092,7 +1092,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — الهيكلة الجديدة</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — برق يتبع مصدر الشحن</p></section>
 
 </div>
 
@@ -1828,7 +1828,7 @@ function opRow(e,attr){
     <div class="log-main">
       <i class="cdot" style="background:${catColor(e.cat)}"></i>
       <span class="tag${isRet(e.cat)?' ret':''}">${catName(e.cat)}</span>
-      <span class="log-date">${shortD(e.date)}</span>
+      <span class="log-date">${shortD(e.date)}</span>${e.via?'<span class="tag" style="opacity:.7">عبر برق</span>':''}
       ${showPay?`<span class="tag pay">${p.name}</span>`:''}
       <span class="log-amt" style="margin-right:auto">${n(e.amt)}</span>
       ${e.note?`<span class="log-note">${escapeHtml(e.note)}</span>`:''}
@@ -2435,7 +2435,9 @@ function mkPending(id,p,date,text){
   const label=p.kind==='expense'?p.merchant:p.kind==='out'?'تحويل إلى '+(p.person||'شخص'):p.kind==='in'?'وارد من '+(p.person||'شخص'):'رسالة ما فهمتها';
   const mkey=p.kind==='expense'?normKey(p.merchant):p.kind==='out'?normKey('>'+p.person):'';
   const mem=mkey&&S.auto.merch[mkey];const cat=(mem&&(hasCat(mem)||mem==='__loan')?mem:'')||(p.kind==='expense'?guessCat(p.merchant):'');
-  return{id:String(id),date,kind:p.kind,amt:p.amt,pay:payIdFor(p.pay),label,person:p.person||'',mkey,cat,raw:p.kind==='unknown'?String(text).replace(/\s+/g,' ').slice(0,160):''};
+  let pay=payIdFor(p.pay),via='';
+  if(p.kind==='expense'&&S.barqSrc&&BAL_PAYS.a.includes(pay)&&!/^mada/.test(pay)&&(S.pays||[]).some(x=>x.id===S.barqSrc)){via=pay;pay=S.barqSrc}// شراء من برق = من الحساب اللي شحنه
+  const o={id:String(id),date,kind:p.kind,amt:p.amt,pay,label,person:p.person||'',mkey,cat,raw:p.kind==='unknown'?String(text).replace(/\s+/g,' ').slice(0,160):''};if(via)o.via=via;return o;
 }
 function setSyncStatus(msg){
   const el=document.getElementById('syncStatus');if(!el)return;
@@ -2458,6 +2460,7 @@ async function syncSms(manual){
       A.since=Math.max(A.since||0,Number(row.id)||0);
       const h=hashStr(String(row.text));if(A.seen.includes(h))continue;A.seen.push(h);
       const p=parseSms(row.text,row.from),date=isoDay(row.time);
+      try{if(p.why==='شحن محفظة'||/^شحن محفظة/.test(p.why||'')&&/barq/i.test(p.merchant||'')){const cc=cardDg('credit'),md=cardDg('mada'),tx=String(row.text);const src=cc&&tx.includes(cc)?'credit':md&&tx.includes(md)?'mada':null;if(src)S.barqSrc=src}}catch(e){}
       let balG=null;try{const bv=smsBalance(row.text),pp=payIdFor(p.pay);balG=pp==='credit'?'c':pp==='mada'?'a':null;if(bv!=null&&balG&&bv!==p.amt)balAnchor(balG,bv,true);else balG=null}catch(e){balG=null}
       if(p.kind==='noise')continue;
       let pdm=false;try{pdm=paydayMatchSms(p,date);if(pdm)payBalSync()}catch(e){}
@@ -2513,7 +2516,7 @@ function ibApprove(id,cat){
   if(cat==='__loan'){addLoan(p.person||p.label.replace(/^تحويل إلى\s*/,''),p.amt,p.date,'','sms');if(p.mkey)S.auto.merch[p.mkey]='__loan';ibRemove(id);return true}
   const m=M(),nid=Date.now()+''+Math.floor(Math.random()*1000);
   if(cat==='fuel')m.fuel.push({id:nid,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'});
-  else{const e={id:nid,cat,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'};if(isRet(cat))e.got=false;m.expenses.push(e)}
+  else{const e={id:nid,cat,amt:p.amt,date:p.date,d:shortD(p.date),pay:p.pay,note:p.label,src:'sms'};if(p.via){e.via=p.via;e.cbr=0}if(isRet(cat))e.got=false;m.expenses.push(e)}
   if(p.mkey)S.auto.merch[p.mkey]=cat;
   if(p.balSkip&&S.bal&&S.bal[p.balSkip])S.bal[p.balSkip].ids.push(nid);
   ibRemove(id);return true;
@@ -3605,10 +3608,14 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30f';
+const APP_VER='2026-09-30g';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
+try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);
+  Object.values(S.months||{}).forEach(m=>{const E=m.expenses||[];const drop=E.filter(e=>bq.includes(e.pay)&&e.src==='sms'&&E.some(o=>o!==e&&!bq.includes(o.pay)&&o.src!=='sms'&&o.cat===e.cat&&Math.abs(o.amt-e.amt)<=1&&String(o.note||'').toLowerCase().split(/\s+/).filter(w=>w.length>=4).some(w=>String(e.note||'').toLowerCase().includes(w))&&(new Date(e.date)-new Date(o.date))/864e5>=0&&(new Date(e.date)-new Date(o.date))/864e5<=4));
+    if(drop.length){m.expenses=E.filter(e=>!drop.includes(e));S.migBarqNote=(S.migBarqNote||0)+drop.length}});save()}}catch(e){}
 try{renderPrev()}catch(e){}
+try{if(S.migBarqNote){setTimeout(()=>toast('شلت '+S.migBarqNote+' عملية برق مكررة (انحسبت وقت الشحن)'),1800);delete S.migBarqNote;save()}}catch(e){}
 try{if(S.appVer!==APP_VER){S.appVer=APP_VER;save();setTimeout(()=>{if(S.auto&&S.auto.url&&S.auto.key){S.auto.lastBackup=0;cloudBackup(false)}},2500)}}catch(e){}
 try{document.getElementById('advDate').value=isoDay();renderAdv()}catch(e){}
 if(!S.cfg&&S.auto&&S.auto.url){setTimeout(()=>document.getElementById('cfgMask').classList.add('on'),900)}
