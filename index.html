@@ -732,8 +732,6 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <div class="pockets" id="pockets"></div>
       <i id="gaugeFill"></i>
       <div class="brk" id="brk"></div>
-      <button class="hide" id="manualToggle" type="button"></button>
-      <button class="hide" id="incOpen" type="button"></button>
     </div>
   </section>
 
@@ -1008,6 +1006,9 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <button class="btn" id="cloudUp" type="button">ارفع نسخة الحين</button>
         <button class="btn ghost" id="cloudDown" type="button">استرجاع من السحابة</button>
       </div>
+      <div class="f-lbl" style="margin-top:18px">قبل آخر تحديث</div>
+      <div class="note-lite" id="prevInfo">—</div>
+      <button class="btn ghost full" id="prevBack" type="button">رجّع بياناتي لنسخة قبل التحديث</button>
       <div class="f-lbl" style="margin-top:18px">نسخة يدوية (نص)</div>
       <div class="row2" style="margin-top:0">
         <button class="btn ghost" id="expBtn">إظهار البيانات</button>
@@ -1016,7 +1017,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — تنظيف الخصوصية</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — شبكة الأمان</p></section>
 
 </div>
 
@@ -1323,7 +1324,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
 <div class="toast" id="toast"></div>
 
 <script>
-const KEY='tawzee_v2';
+const KEY='tawzee_v2',PREV_KEY='tawzee_prev';
 try{if(!localStorage.getItem(KEY)){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k!==KEY&&/_budget_v2$/.test(k)){localStorage.setItem(KEY,localStorage.getItem(k));break}}}}catch(e){}
 const LINE_COLORS={car:'#8FB3D9',ball:'#8FD1A8',mom:'#D9A0BE',card:'#C98B4E',jam:'#B7C57A',save:'#5DB592',zamala:'#6FB9B6',fuel:'#E6CF93'};
 const CAT_COLORS={dining:'#E0896A',coffee:'#B98A62',fuel:'#C98B4E',bills:'#8FB3D9',grocery:'#8FD1A8',other:'#B7A7D9',carcare:'#6FB9B6',
@@ -2673,7 +2674,6 @@ function renderIncome(){
   const ex=incCapSum(M()),cl=document.getElementById('capLbl');
   if(cl){let t=cl.parentNode.querySelector('.cap-extra');if(ex>0){if(!t){t=document.createElement('span');t.className='cap-extra';cl.parentNode.appendChild(t)}t.innerHTML=`منها <span class="num">${n(ex)}</span> دخل إضافي`}else if(t)t.remove()}
 }
-document.getElementById('incOpen').addEventListener('click',()=>openInc(null));
 document.getElementById('incAdd').addEventListener('click',()=>openInc(null));
 document.getElementById('incList').addEventListener('click',e=>{const r=e.target.closest('[data-inc]');if(r)openInc(r.dataset.inc)});
 document.getElementById('incChips').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(b)document.getElementById('incNote').value=b.dataset.t});
@@ -2730,19 +2730,7 @@ function homeNums(left){// الرقم الواحد: كم تقدر تصرف ال�
   const dl=Math.max(daysTo(nextPayday()),1),has=S.bal&&(S.bal.c||S.bal.a||S.bal.k);let avail=left;
   if(has){const fl=S.balFloor!=null?+S.balFloor:7000,c=balLive('c'),a=balLive('a'),k=balLive('k');avail=(c!=null?c-fl:0)+(a||0)+(k||0)}
   return{avail:+avail.toFixed(2),dl,perDay:avail/dl,env:!!has}}
-function renderPockets(m,cap){
-  const el=document.getElementById('pockets');if(!el)return;
-  if(S.creditCap==null||!(cap>0)){try{renderBal(null)}catch(e){}el.innerHTML=`<div class="pk-tip" style="text-align:center;padding:6px 0">＋ وزّع السقف على البطاقة الائتمانية وحساب المصروف</div>`;return}
-  const cry=+m.carry||0,cc=Math.min(+S.creditCap||0,cap),ac=cap-cc-cry,{c,a}=pocketSpent(m),lc=cc-c,la=ac-a;
-  const bar=(sp,cp,col)=>`<div class="pk-bar"><i style="width:${cp>0?Math.min(sp/cp*100,100).toFixed(1):100}%;background:${sp>cp?'var(--coral)':col}"></i></div>`;
-  const box=(t,sub,l,sp,cp,col)=>`<div class="pk${l<cp*0.1?' low':''}"><div class="pk-h"><span>${t}</span><small>${sub}</small></div><div class="pk-v num" style="color:${l<0?'var(--coral)':'var(--text)'}">${n(l)} <small>من ${n(cp)}</small></div>${bar(sp,cp,col)}</div>`;
-  let tip=cry?`حصة حساب المصروف نقصت <b class="num">${n(cry)}</b> — تعدّي الشهر اللي قبل. `:'';
-  if(la<0&&lc>0)tip+=`حساب المصروف تعدّى بـ <b class="num">${n(-la)}</b> — غطّيها من حصة الائتمانية، واستخدم الائتمانية وين ما قدرت.`;
-  else if(lc<0&&la>0)tip+=`الائتمانية تعدّت بـ <b class="num">${n(-lc)}</b> — تنخصم من حصة حساب المصروف.`;
-  else if(la>=0&&la<ac*0.15&&lc>0)tip+='حساب المصروف قرب يخلص — استخدم الائتمانية في أي مكان يقبل فيزا أو ماستركارد.';
-  try{renderBal({lc,la,cc,ac,c,a})}catch(e){}
-  el.innerHTML='';
-}
+function renderPockets(m,cap){try{renderBal(null)}catch(e){}const el=document.getElementById('pockets');if(el)el.innerHTML=''}// الحصص انتهى دورها — الظروف تغني عنها
 function openPockets(){
   const m=M(),cap=capOf(m),$=k=>document.getElementById(k);
   const prev=Object.keys(S.months).sort().filter(k=>k!==S.current).slice(-1)[0],pm=prev?S.months[prev]:null;
@@ -2952,10 +2940,6 @@ document.getElementById('ibBadge').addEventListener('click',e=>{e.preventDefault
       balAnchor(g,nv)}
     save();refreshAll();toast(msgs.length?msgs.join(' · '):'انحفظ — مطابق ✓')});
 })();
-document.getElementById('manualToggle').addEventListener('click',()=>{
-  const b=document.getElementById('manualBox'),open=b.classList.toggle('hide')===false;
-  document.getElementById('manualToggle').textContent=open?'إخفاء الإضافة اليدوية':'＋ إضافة يدوية (كاش أو عملية ما وصلت)';
-});
 
 // ===== Goals =====
 function initGoals(){
@@ -3217,6 +3201,11 @@ async function cloudRestore(){
   }catch(e){renderCloud('تعذّر الاسترجاع: '+(e.message||'تحقق من الاتصال'));toast('تعذّر الاسترجاع')}
 }
 document.getElementById('cloudUp').addEventListener('click',()=>cloudBackup(true));
+function renderPrev(){const el=document.getElementById('prevInfo'),b=document.getElementById('prevBack');let P=null;try{P=JSON.parse(localStorage.getItem(PREV_KEY)||'null')}catch(e){}
+  if(!P){el.textContent='ما فيه نسخة محفوظة — تتسوى لحالها أول ما تفتح أي تحديث جديد.';b.disabled=true;return}b.disabled=false;
+  const d=new Date(P.at);el.textContent=`محفوظة ${d.getDate()} ${AR_MONTHS[d.getMonth()]} ${d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})} — استخدمها بس لو التحديث خرّب شي.`;
+  b.onclick=async()=>{if(!await ask('ترجع بياناتك لآخر نسخة قبل التحديث؟ أي شي سجلته بعد التحديث بيروح.','رجّعها','لا'))return;
+    localStorage.setItem(KEY,P.data);location.reload()}}
 document.getElementById('cloudDown').addEventListener('click',cloudRestore);
 
 
@@ -3373,6 +3362,17 @@ async function runHealth(){
   const nan=[...m.expenses,...m.fuel].filter(e=>!(+e.amt>0)).length;
   add(dups.length||nan?'warn':'ok','سلامة البيانات',dups.length||nan?[dups.length?`${dups.length} عملية مكررة محتملة: ${dups.slice(0,3).map(e=>e.note+' '+n(e.amt)).join('، ')}`:'',nan?`${nan} عملية مبلغها صفر أو غير صحيح`:''].filter(Boolean).join(' · '):`${m.expenses.length+m.fuel.length} عملية هذا الشهر — ما فيه تكرار أو أخطاء`);
   // 9 month/payday sanity
+  // فحوصات الاتساق
+  try{const L=S.lnLedger||{},want=(S.loans||[]).filter(l=>l.sav).reduce((t,l)=>t+Math.max(0,lnRemain(l)),0),had=Object.values(L).reduce((t,v)=>t+(+v||0),0);
+    add(Math.abs(want-had)<0.5?'ok':'bad','السلف ↔ الادخار',Math.abs(want-had)<0.5?`متطابق — ${n(want)} مخصومة من الادخار`:`فرق ${n(want-had)} بين السلف والادخار — افتح أي سلفة واحفظها`)}catch(e){}
+  try{const A2=S.advLedger||{},want=(S.adv||[]).filter(a=>!a.back).reduce((t,a)=>t+ +a.amt,0),had=Object.values(A2).reduce((t,v)=>t+(+v||0),0);
+    if(want||had)add(Math.abs(want-had)<0.5?'ok':'bad','السحب المؤقت ↔ الادخار',Math.abs(want-had)<0.5?`متطابق — ${n(want)}`:`فرق ${n(want-had)}`)}catch(e){}
+  try{const m=M(),[y,mo]=S.current.split('-').map(Number),lo=new Date(y,mo-2,15),hi=new Date(y,mo,5),tm=Date.now()+2*D;
+    const odd=[...m.expenses,...m.fuel].filter(e=>{const t=new Date(e.date);return t<lo||t>hi||t.getTime()>tm});
+    add(odd.length?'warn':'ok','تواريخ العمليات',odd.length?`${odd.length} عملية تاريخها برّا الشهر أو في المستقبل: ${odd.slice(0,3).map(e=>(e.note||catName(e.cat))+' '+shortD(e.date)).join('، ')}`:'كلها داخل الشهر')}catch(e){}
+  try{if(S.bal&&(S.bal.c||S.bal.a||S.bal.k)){const neg=['a','k'].filter(g=>{const v=balLive(g);return v!=null&&v<-0.5}),old=Math.min(...['a','k'].filter(g=>S.bal[g]).map(g=>S.bal[g].at));
+    const age=Date.now()-old;
+    add(neg.length?'bad':age>14*D?'warn':'ok','أرصدة الظروف',neg.length?`${neg.map(g=>ENV_NAME[g]).join(' و')} بالسالب — غالباً عملية مكررة أو دخل ما انسجل. طابق مع البنك`:age>14*D?`آخر مطابقة ${ageTxt(age)} — طابق مع البنك`:`سليمة — آخر مطابقة ${ageTxt(age)}`)}}catch(e){}
   const pd=paydayDate();add('ok','يوم الراتب الجاي',`${pd.getDate()} ${AR_MONTHS[pd.getMonth()]} — ${['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][pd.getDay()]}`);
   S.health={at:Date.now(),res:out};save();renderHealth();renderAlerts();
   btn.disabled=false;btn.textContent='افحص الحين';
@@ -3452,7 +3452,12 @@ document.getElementById('loanList').addEventListener('click',async e=>{
   else if(db){if(!await ask('حذف هذي السلفة نهائياً؟'))return;S.loans=S.loans.filter(x=>x.id!==db.dataset.lndel);save();renderLoans()}
 });
 
+// ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
+const APP_VER='2026-09-30c';
+try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
+try{renderPrev()}catch(e){}
+try{if(S.appVer!==APP_VER){S.appVer=APP_VER;save();setTimeout(()=>{if(S.auto&&S.auto.url&&S.auto.key){S.auto.lastBackup=0;cloudBackup(false)}},2500)}}catch(e){}
 try{document.getElementById('advDate').value=isoDay();renderAdv()}catch(e){}
 if(!S.cfg&&S.auto&&S.auto.url){setTimeout(()=>document.getElementById('cfgMask').classList.add('on'),900)}
 document.getElementById('cfgSave1').addEventListener('click',()=>{S.cfg={own:document.getElementById('cfgOwn1').value.trim(),fixed:document.getElementById('cfgFixed1').value.trim()};save();renderAutoCfg();document.getElementById('cfgMask').classList.remove('on');toast('انحفظ في جوالك ✓')});
