@@ -1093,7 +1093,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — رصيد برق + تنبيه التكرار</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — الشراء بدل الشحن</p></section>
 
 </div>
 
@@ -2357,7 +2357,7 @@ function smsPay(src,t){
   if(src==='rajhi')return/حوالة/.test(t)?'transfer':'rajhi';
   if(src==='barq')return'barq';if(src==='tiqmo')return'tiqmo';return'';
 }
-const clean=x=>String(x||'').replace(/\s+/g,' ').replace(/[;*]+$/,'').trim();
+const clean=x=>String(x||'').replace(/\s+/g,' ').replace(/^[;*\s]+|[;*\s]+$/g,'').trim();
 function smsMerchant(t,src){
   let m;
   if((m=t.match(/لدى\s+([^\n]+)/)))return clean(m[1]);
@@ -2372,7 +2372,7 @@ function smsPerson(t){
   let m;
   if((m=t.match(/;\s*([^\n;]+)/)))return clean(m[1]);
   if((m=t.match(/الى\s+([^\n]+)/)))return clean(m[1]);
-  if((m=t.match(/(?:^|\n)\s*(?:لـ?|من)\s*\*?\d{3,}\s*([^\n\d][^\n]*)/)))return clean(m[1]);
+  if((m=t.match(/(?:^|\n)\s*(?:لـ?|من)\s*\*?\d{3,}\*?\s*([^\n\d*][^\n]*)/)))return clean(m[1]);
   return'';
 }
 function parseSms(t,sender){
@@ -2463,7 +2463,8 @@ async function syncSms(manual){
       A.since=Math.max(A.since||0,Number(row.id)||0);
       const h=hashStr(String(row.text));if(A.seen.includes(h))continue;A.seen.push(h);
       const p=parseSms(row.text,row.from),date=isoDay(row.time);
-      try{const tx=String(row.text);if(p.why==='شحن محفظة'&&p.src==='barq'||/^شحن محفظة/.test(p.why||'')&&(/barq/i.test(p.merchant||'')||/\bbarq\b/i.test(tx))){const cc=cardDg('credit'),md=cardDg('mada');const src=cc&&tx.includes(cc)?'credit':md&&tx.includes(md)?'mada':null;if(src){S.barqSrc=src;barqTopUp(src,p.amt,Date.parse(row.time)||Date.now())}}}catch(e){}
+      try{const tx=String(row.text);if(p.why==='شحن محفظة'&&p.src==='barq'||/^شحن محفظة/.test(p.why||'')&&(/barq/i.test(p.merchant||'')||/\bbarq\b/i.test(tx))){const cc=cardDg('credit'),md=cardDg('mada');const src=cc&&tx.includes(cc)?'credit':md&&tx.includes(md)?'mada':null;if(src){S.barqSrc=src;barqTopUp(src,p.amt,Date.parse(row.time)||Date.now(),p.src)}}
+        if(p.src==='barq'&&p.kind==='ignore'&&/^(تحويل لنفسك|بند ثابت)$/.test(p.why||''))barqDrain(p.amt)}catch(e){}
       let balG=null;try{const bv=smsBalance(row.text),pp=payIdFor(p.pay);balG=pp==='credit'?'c':pp==='mada'?'a':null;if(bv!=null&&balG&&bv!==p.amt)balAnchor(balG,bv,true);else balG=null}catch(e){balG=null}
       if(p.kind==='noise')continue;
       let pdm=false;try{pdm=paydayMatchSms(p,date);if(pdm)payBalSync()}catch(e){}
@@ -2492,7 +2493,7 @@ function renderInbox(){
   document.getElementById('inboxCnt').textContent=P.length||'';
   const opts=sel=>S.cats.map(c=>`<option value="${c.id}"${c.id===sel?' selected':''}>${escapeHtml(c.name)}</option>`).join('');
   document.getElementById('inbox').innerHTML=[...P].sort((a,b)=>b.date.localeCompare(a.date)).map(p=>{
-    const meta=`<div class="ib-meta"><span class="log-date">${shortD(p.date)}</span><span class="tag pay">${escapeHtml(payName(p.pay))}</span>${p.kind!=='in'&&isDup(p)?'<span class="ib-dup">يمكن مسجلة يدوياً</span>':''}${p.via?'<span class="tag" style="opacity:.7">عبر برق</span>':''}</div>${(()=>{const tw=barqTwin(p,allExp());return tw?`<div class="ib-warn">يمكن مكررة: سجلت الشحن بيدك «${escapeHtml(tw.note||catName(tw.cat))} ${n(tw.amt)}» يوم ${shortD(tw.date)}. لو هي نفسها اضغط «تجاهل».</div>`:''})()}`;
+    const meta=`<div class="ib-meta"><span class="log-date">${shortD(p.date)}</span><span class="tag pay">${escapeHtml(payName(p.pay))}</span>${p.kind!=='in'&&isDup(p)?'<span class="ib-dup">يمكن مسجلة يدوياً</span>':''}${p.via?'<span class="tag" style="opacity:.7">عبر برق</span>':''}</div>${(()=>{const tw=barqTwin(p,allExp());return tw?`<div class="ib-warn">مكررة مع شحن سجلته بيدك: «${escapeHtml(tw.note||catName(tw.cat))} ${n(tw.amt)}» يوم ${shortD(tw.date)}. المصروف الصح هو الشراء نفسه (تاريخه ومبلغه الحقيقي).<button class="btn sm" type="button" data-bqfix="${tw.id}" style="display:block;width:100%;margin-top:7px">✓ سجّل الشراء وشيل الشحن اليدوي</button></div>`:''})()}`;
     if(p.kind==='inst'){
       return`<div class="ib-row" data-ib="${p.id}"><div class="ib-top"><span class="ib-l">${escapeHtml(p.label)}</span><b class="num ib-a">${n(p.amt)}</b></div>${meta}
         <div class="log-note" style="white-space:normal">بند ثابت — ما يدخل على مصروفك. من وين انخصم؟</div>
@@ -2535,6 +2536,9 @@ document.getElementById('inbox').addEventListener('click',e=>{
     ibApprove(id,cat);save();refreshAll();renderInbox();toast('تم التسجيل');
   }else if(e.target.closest('[data-inc-in]')){const p=S.auto.pending.find(x=>x.id===id);if(p)openInc(null,{pid:id,amt:p.amt,date:p.date,note:p.label.replace(/^وارد من\s*/,'')})}
   else if(e.target.closest('[data-skip]')){ibRemove(id);save();renderInbox()}
+  else if(e.target.closest('[data-bqfix]')){const p=S.auto.pending.find(x=>x.id===id),tid=e.target.closest('[data-bqfix]').dataset.bqfix;if(!p)return;let tcat='';
+    Object.values(S.months||{}).forEach(m=>{const i=(m.expenses||[]).findIndex(x=>x.id===tid);if(i>=0){tcat=m.expenses[i].cat;m.expenses.splice(i,1)}});
+    ibApprove(id,(row.querySelector('[data-cat]')||{}).value||p.cat||tcat);save();refreshAll();renderInbox();toast('انسجل الشراء وانشال الشحن اليدوي ✓')}
   else if(e.target.closest('[data-inst-adv]')){const p=S.auto.pending.find(x=>x.id===id);if(p){advAdd(p.amt,'قسط السيارة',p.date);S.adv[S.adv.length-1].link='car';ibRemove(id);save();renderInbox();renderAdv();renderPayday();refreshAll();toast('انخصم من الادخار — ويطلع لك يوم الراتب ترجّعه')}}
   else if(e.target.closest('[data-lnmatch]')){const p=S.auto.pending.find(x=>x.id===id);const lid=e.target.closest('[data-lnmatch]').dataset.lnmatch,ll=S.loans.find(x=>x.id===lid);
     if(ll&&p.person){S.lnAlias=S.lnAlias||{};S.lnAlias[nameKey(p.person)]=nameKey(ll.person).split(' ')[0]||ll.person}// يتعلّم اسم المرسل للمرة الجاية
@@ -2810,8 +2814,11 @@ const ENV_NAME={c:'الائتمانية',a:'حساب المصروف',k:'الكا
 // ===== برق: الفلوس اللي انشحنت وما انصرفت لسا — البنك خصمها وقت الشحن، فتنضاف على رصيد الحساب اللي شحن منه =====
 function barqPoolOf(g){const P=S.barqPool||{};return +(BAL_PAYS[g]||[]).reduce((t,id)=>t+(+P[id]||0),0).toFixed(2)}
 function barqPoolSum(){const P=S.barqPool||{};return +Object.values(P).reduce((t,v)=>t+(+v||0),0).toFixed(2)}
-function barqTopUp(src,amt,t){if(!(+amt>0))return;const L=S.barqLastTop;if(L&&Math.abs(L.a-amt)<0.01&&Math.abs(t-L.t)<15*6e4)return;// نفس الشحنة من رسالتين (برق + البنك)
-  S.barqLastTop={a:+amt,t};S.barqPool=S.barqPool||{};S.barqPool[src]=+((+S.barqPool[src]||0)+ +amt).toFixed(2)}
+function barqTopUp(src,amt,t,from){if(!(+amt>0))return;const L=S.barqLastTop;if(L&&L.src===src&&L.from!==from&&Math.abs(L.a-amt)<0.01&&Math.abs(t-L.t)<15*6e4){S.barqLastTop=null;return}// نفس الشحنة: رسالة من برق + رسالة من البنك لنفس البطاقة
+  S.barqLastTop={a:+amt,t,src,from};S.barqPool=S.barqPool||{};S.barqPool[src]=+((+S.barqPool[src]||0)+ +amt).toFixed(2)}
+function barqDrain(amt){let r=+amt;S.barqPool=S.barqPool||{};const P=S.barqPool,ks=[S.barqSrc].concat(Object.keys(P)).filter((k,i,a)=>k&&a.indexOf(k)===i);
+  ks.forEach(k=>{if(r<=0)return;const t=Math.min(+P[k]||0,r);if(t<=0)return;P[k]=+((+P[k])-t).toFixed(2);r=+(r-t).toFixed(2);
+    const g=Object.keys(BAL_PAYS).find(g=>BAL_PAYS[g].includes(k));if(g&&S.bal&&S.bal[g])S.bal[g].val=+(S.bal[g].val-t).toFixed(2)})}
 function barqSpend(src,amt){S.barqPool=S.barqPool||{};S.barqPool[src]=Math.max(0,+((+S.barqPool[src]||0)-amt).toFixed(2))}
 function balItems(g){const P=BAL_PAYS[g],out=[];Object.values(S.months||{}).forEach(m=>{(m.expenses||[]).concat(m.fuel||[]).forEach(e=>{if(P.includes(e.pay))out.push(e)})});return out}
 function balAnchor(g,val,skipNext){S.bal=S.bal||{};S.bal[g]={val:+(+val+barqPoolOf(g)).toFixed(2),at:Date.now(),ids:balItems(g).map(e=>e.id),src:skipNext?'sms':'manual'};
@@ -3512,9 +3519,9 @@ async function runHealth(){
     catch(e){add('bad','الاتصال بالشيت','ما قدر يوصل — تحقق من الإنترنت')}}
   // 3 bank messages flow
   if(connected){lastSyncTry=0;await syncSms(false)}
-  if(!A.since)add('bad','وصول رسائل البنك','ما وصلت ولا رسالة بنك للحين. شيّك على الأتمتتين في تطبيق Shortcuts.');
+  if(!A.since)add('bad','وصول رسائل البنك','ما وصلت ولا رسالة بنك للحين. شيّك على أتمتة «شراء» وأتمتة «حوال» في تطبيق Shortcuts.');
   else{const age=Date.now()-A.since;
-    add(age>7*D?'bad':age>3*D?'warn':'ok','وصول رسائل البنك','آخر رسالة وصلت الشيت '+ageTxt(age)+(age>3*D?' — افتح Shortcuts ← Automation وتأكد إن أتمتة «شراء» و«حوالة» مفعّلة وعلى Run Immediately.':''))}
+    add(age>7*D?'bad':age>3*D?'warn':'ok','وصول رسائل البنك','آخر رسالة وصلت الشيت '+ageTxt(age)+(age>3*D?' — افتح Shortcuts ← Automation وتأكد إن أتمتة «شراء» وأتمتة «حوال» مفعّلة و«Confirm Before Run» مطفي.':''))}
   // 4 parser
   let bad=[];HC_SAMPLES.forEach(([f,t,k,a])=>{const p=parseSms(t,f);if(p.kind!==k||!sameAmt(p.amt,a))bad.push(k)});
   add(bad.length?'bad':'ok','فهم رسائل البنك',bad.length?`${bad.length} من ${HC_SAMPLES.length} صيغ ما انفهمت صح`:`كل الصيغ (${HC_SAMPLES.length}) انفهمت صح: شراء، تحويل، شحن محفظة، سداد، كاش باك، رموز تحقق`);
@@ -3530,9 +3537,9 @@ async function runHealth(){
     else{const age=Date.now()-S.gold.at;add(age>2*D?'warn':'ok','سعر الذهب',`الجرام ${n(S.gold.price)} ريال — تحدّث ${ageTxt(age)}`)}}
   // 8 data integrity
   const m=M(),seen={},dups=[];m.expenses.forEach(e=>{if(!e.note)return;const k=e.amt+'|'+e.date+'|'+e.note+'|'+(e.grp?e.grp+e.pay:'');if(seen[k])dups.push(e);else seen[k]=1});
-  {const AE=allExp();m.expenses.forEach(e=>{if(e.via&&!dups.includes(e)&&barqTwin(e,AE))dups.push(e)})}
+  const bqd=[];{const AE=allExp();m.expenses.forEach(e=>{const tw=e.via&&barqTwin(e,AE);if(tw&&!bqd.includes(tw))bqd.push(tw)})}
   const nan=[...m.expenses,...m.fuel].filter(e=>!(+e.amt>0)).length;
-  add(dups.length||nan?'warn':'ok','سلامة البيانات',dups.length||nan?[dups.length?`${dups.length} عملية مكررة محتملة: ${dups.slice(0,3).map(e=>e.note+' '+n(e.amt)).join('، ')}`:'',nan?`${nan} عملية مبلغها صفر أو غير صحيح`:''].filter(Boolean).join(' · '):`${m.expenses.length+m.fuel.length} عملية هذا الشهر — ما فيه تكرار أو أخطاء`);
+  add(dups.length||nan||bqd.length?'warn':'ok','سلامة البيانات',dups.length||nan||bqd.length?[dups.length?`${dups.length} عملية مكررة محتملة: ${dups.slice(0,3).map(e=>e.note+' '+n(e.amt)).join('، ')}`:'',bqd.length?`شحن برق مسجل بيدك وقباله الشراء نفسه: ${bqd.slice(0,3).map(e=>(e.note||catName(e.cat))+' '+n(e.amt)+' ('+shortD(e.date)+')').join('، ')} — احذف الشحن وخل الشراء`:'',nan?`${nan} عملية مبلغها صفر أو غير صحيح`:''].filter(Boolean).join(' · '):`${m.expenses.length+m.fuel.length} عملية هذا الشهر — ما فيه تكرار أو أخطاء`);
   // 9 month/payday sanity
   // فحوصات الاتساق
   try{const L=S.lnLedger||{},want=(S.loans||[]).filter(l=>l.sav).reduce((t,l)=>t+Math.max(0,lnRemain(l)),0),had=Object.values(L).reduce((t,v)=>t+(+v||0),0);
@@ -3567,7 +3574,7 @@ document.getElementById('healthRun').addEventListener('click',runHealth);
 
 // ===== Loans (across months) =====
 const lnRemain=l=>+(l.amt-(l.paid||[]).reduce((s,p)=>s+p.amt,0)).toFixed(2);
-const nameKey=s=>String(s||'').replace(/^(ال)/,'').replace(/\s+/g,' ').trim().toLowerCase();
+const nameKey=s=>String(s||'').replace(/[*;]+/g,' ').replace(/\s+/g,' ').trim().replace(/^(ال)/,'').trim().toLowerCase();
 function sameName(a,b){const A=nameKey(a).split(' ')[0],B=nameKey(b).split(' ')[0];return A&&B&&(A===B||nameKey(a).includes(A)&&nameKey(b).includes(A)||nameKey(b).includes(B)&&nameKey(a).includes(B))}
 function addLoan(person,amt,date,note,src,sav){S.loans.push({id:Date.now()+''+Math.floor(Math.random()*1000),person:person||'شخص',amt:+amt,date:date||isoDay(),note:note||'',paid:[],src:src||'',sav:sav!==false})}
 function payLoan(id,amt,date,note){const l=S.loans.find(x=>x.id===id);if(!l)return 0;const a=Math.min(+amt,lnRemain(l));if(a>0)l.paid.push({amt:+a.toFixed(2),date:date||isoDay(),note:note||''});return a}
@@ -3625,14 +3632,16 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30h';
+const APP_VER='2026-09-30i';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
-try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);
-  Object.values(S.months||{}).forEach(m=>{const E=m.expenses||[];const drop=E.filter(e=>bq.includes(e.pay)&&e.src==='sms'&&E.some(o=>o!==e&&!bq.includes(o.pay)&&o.src!=='sms'&&o.cat===e.cat&&Math.abs(o.amt-e.amt)<=1&&String(o.note||'').toLowerCase().split(/\s+/).filter(w=>w.length>=4).some(w=>String(e.note||'').toLowerCase().includes(w))&&(new Date(e.date)-new Date(o.date))/864e5>=0&&(new Date(e.date)-new Date(o.date))/864e5<=4));
+try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);// شراء برق + شحن مسجل يدوياً = نخلي الشراء (هو المصروف الحقيقي) ونشيل الشحن
+  Object.values(S.months||{}).forEach(m=>{const E=m.expenses||[],drop=[];E.filter(e=>bq.includes(e.pay)&&e.src==='sms').forEach(e=>{const o=E.find(o=>o!==e&&!drop.includes(o)&&!bq.includes(o.pay)&&o.src!=='sms'&&o.cat===e.cat&&Math.abs(o.amt-e.amt)<=1&&String(o.note||'').toLowerCase().split(/\s+/).filter(w=>w.length>=4).some(w=>String(e.note||'').toLowerCase().includes(w))&&(new Date(e.date)-new Date(o.date))/864e5>=0&&(new Date(e.date)-new Date(o.date))/864e5<=4);
+    if(o){drop.push(o);e.via=e.pay;e.pay=o.pay;e.cbr=0}});
     if(drop.length){m.expenses=E.filter(e=>!drop.includes(e));S.migBarqNote=(S.migBarqNote||0)+drop.length}});save()}}catch(e){}
+try{if(S.lnAlias&&!S.migAlias1){S.migAlias1=1;const o={};Object.entries(S.lnAlias).forEach(([k,v])=>{o[nameKey(k)]=v});S.lnAlias=o;save()}}catch(e){}
 try{renderPrev()}catch(e){}
-try{if(S.migBarqNote){setTimeout(()=>toast('شلت '+S.migBarqNote+' عملية برق مكررة (انحسبت وقت الشحن)'),1800);delete S.migBarqNote;save()}}catch(e){}
+try{if(S.migBarqNote){setTimeout(()=>toast('صححت '+S.migBarqNote+' عملية برق: خليت الشراء وشلت الشحن اليدوي'),1800);delete S.migBarqNote;save()}}catch(e){}
 try{if(S.appVer!==APP_VER){S.appVer=APP_VER;save();setTimeout(()=>{if(S.auto&&S.auto.url&&S.auto.key){S.auto.lastBackup=0;cloudBackup(false)}},2500)}}catch(e){}
 try{document.getElementById('advDate').value=isoDay();renderAdv()}catch(e){}
 if(!S.cfg&&S.auto&&S.auto.url){setTimeout(()=>document.getElementById('cfgMask').classList.add('on'),900)}
