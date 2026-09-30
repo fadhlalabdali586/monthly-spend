@@ -515,6 +515,34 @@ section[data-tab]:not(.tab-off){animation:fadeUp .3s ease both}
 .cal-leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .cal-ins{margin-top:10px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7;min-height:21px}
 .cal-ins b{color:var(--text);font-weight:500}
+/* ===== ورقة اليوم ===== */
+.ds-nav{display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:6px}
+.ds-arr{width:40px;height:40px;border-radius:12px;border:1px solid var(--line-soft);background:rgba(255,255,255,.03);color:var(--text);font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.ds-arr:disabled{opacity:.25}
+.ds-title{text-align:center}
+.ds-title b{display:block;font-size:16.5px;font-weight:600}
+.ds-title small{font-size:12px;color:var(--faint)}
+.ds-total{display:flex;align-items:baseline;justify-content:center;gap:6px;margin:14px 0 2px}
+.ds-total .num{font:600 40px/1.1 var(--num);color:var(--text)}
+.ds-total small{font-size:13px;color:var(--muted)}
+.ds-bar{position:relative;height:8px;border-radius:4px;background:rgba(255,255,255,.06);margin:12px 4px 0}
+.ds-bar i{position:absolute;top:0;bottom:0;right:0;border-radius:4px}
+.ds-bar em{position:absolute;top:-5px;bottom:-5px;width:2px;border-radius:2px;background:var(--text);transform:translateX(50%)}
+.ds-chip{display:flex;align-items:center;justify-content:center;gap:6px;margin:14px auto 4px;width:fit-content;font-size:12.5px;border-radius:20px;padding:4px 12px}
+.ds-chip.ok{color:var(--mint);background:rgba(127,209,166,.1);border:1px solid rgba(127,209,166,.35)}
+.ds-chip.over{color:#F2A08C;background:rgba(232,118,95,.1);border:1px solid rgba(232,118,95,.4)}
+.ds-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted);margin:18px 2px 6px}
+.ds-h b{font:500 12.5px var(--num);color:var(--text)}
+.ds-row{position:relative;display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:10px;padding:11px 10px;border-radius:12px;background:rgba(255,255,255,.03);margin-bottom:6px;overflow:hidden;cursor:pointer}
+.ds-row .sh{position:absolute;top:0;bottom:0;right:0;background:rgba(255,255,255,.045);pointer-events:none}
+.ds-row .cdot{width:9px;height:9px;border-radius:50%;position:relative}
+.ds-m{min-width:0;position:relative}
+.ds-m b{display:block;font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-m small{display:block;font-size:11.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-a{font:500 15px var(--num);position:relative;direction:ltr}
+.ds-row.bill{background:rgba(169,199,224,.05)}
+.ds-empty{text-align:center;color:var(--muted);font-size:14px;padding:18px 0 6px}
+.ds-add{margin-top:12px}
 #payBanner,#alertSec{display:none!important}
 .tasks{padding:6px 12px}
 .tk{display:flex;align-items:center;gap:8px;padding:11px 2px;font-size:14px;cursor:pointer}
@@ -1124,7 +1152,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — تقويم الدورة + أرقام عربية</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — تفاصيل اليوم</p></section>
 
 </div>
 
@@ -1181,6 +1209,9 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   </div>
 </div>
 
+<div class="mask" id="dayMask">
+  <div class="modal day-sheet" id="daySheet"></div>
+</div>
 <div class="mask" id="fabMask">
   <div class="modal fab-modal">
     <button type="button" class="fab-opt" data-fab="exp"><span class="fo-i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.5-1.5 1.5-2-1.5L6 20.5z"/><path d="M9 8.5h6M9 12h6"/></svg></span><span><strong>مصروف</strong><small>كاش أو عملية ما وصلت</small></span></button>
@@ -1964,7 +1995,7 @@ function renderCal(){// تقويم الدورة: كل يوم مربع — أخض
     if(d<st||d>pay){cells+='<div class="cl out"></div>';continue}
     if(+d===+pay){cells+=`<div class="cl pay"><small>الراتب</small>${dn}</div>`;continue}
     const r=map[k],past=d<t,isT=+d===+t,mon=dn===1?`<span class="cl-m">${AR_MONTHS[d.getMonth()]}</span>`:'';
-    let cls='cl';if(past)cls+=r&&r.v>y?' over':' ok';if(isT)cls+=' today'+(r&&r.v>y?' over':'');if(calSel===k)cls+=' sel';
+    let cls='cl';if(past)cls+=r&&r.v>y?' over':' ok';if(isT)cls+=' today'+(r&&r.v>y?' over':'');
     cells+=`<div class="${cls}"${past||isT?` data-d="${k}"`:''}>${mon}${r&&r.b?'<span class="cl-b"></span>':''}${dn}</div>`}
   const DN=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
   const line=(k,lbl)=>{const r=map[k];if(!r||(!r.v&&!r.b))return`${lbl} ما صرفت شي 👌`;
@@ -1972,12 +2003,42 @@ function renderCal(){// تقويم الدورة: كل يوم مربع — أخض
     if(calSel){const top=vi.sort((a,b)=>b.a-a.a).slice(0,3).map(x=>`${escapeHtml(x.l)} <b class="num">${n(x.a)}</b>`).join('، ');if(top)s+=` — ${top}`}
     else{const by={};vi.forEach(x=>by[x.cat]=(by[x.cat]||0)+x.a);const tc=Object.keys(by).sort((a,b)=>by[b]-by[a])[0];if(tc&&vi.length>1&&by[tc]>=r.v*.4)s+=` — منها ${escapeHtml(catName(tc))} <b class="num">${n(by[tc])}</b>`}
     if(r.b)s+=` · وفواتير <b class="num">${n(r.b)}</b>`;return s};
-  let ins='';if(calSel){const d=new Date(calSel+'T00:00:00');ins=line(calSel,`${+d===+t?'اليوم':DN[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1)}`)}
-  else{const yd=new Date(t.getTime()-D);ins=yd>=st?line(ymd(yd),'أمس'):'أول يوم في الدورة — اضغط أي يوم تشوف وش صرفت فيه'}
+  const yd=new Date(t.getTime()-D);const ins=(yd>=st?line(ymd(yd),'أمس'):'أول يوم في الدورة')+'<br><span style="font-size:11px;color:var(--faint)">اضغط على أي يوم تشوف تفاصيله</span>';
   el.innerHTML=`<div class="cal-h">${DN.map((x,i)=>`<span${i>=5?' class="we"':''}>${x}</span>`).join('')}</div><div class="cal-g">${cells}</div>
     <div class="cal-leg"><span><i style="background:rgba(127,209,166,.55)"></i>أقل من <b class="num">${n(y)}</b></span><span><i style="background:rgba(232,118,95,.7)"></i>أكثر</span><span><i style="border-radius:50%;width:7px;height:7px;background:var(--lilac)"></i>فاتورة</span><span><i style="border:2px solid var(--gold);width:9px;height:9px"></i>اليوم</span></div>
     <div class="cal-ins">${ins}</div>`}
-document.addEventListener('click',e=>{const c=e.target.closest('#cal [data-d]');if(!c)return;calSel=calSel===c.dataset.d?null:c.dataset.d;renderCal()});
+document.addEventListener('click',e=>{const c=e.target.closest('#cal [data-d]');if(!c)return;openDay(c.dataset.d)});
+var dayK=null;
+function dayData(k){const m=M(),noFuelLine=!m.lines.some(l=>l.kind==='fuel'),it=[];
+  m.expenses.forEach(e=>{if(e.date===k&&inCap(e.cat))it.push({e,fuel:false,cat:e.cat})});
+  if(noFuelLine)(m.fuel||[]).forEach(e=>{if(e.date===k)it.push({e,fuel:true,cat:'fuel'})});
+  const vi=it.filter(x=>!calBill(x.cat)).sort((a,b)=>b.e.amt-a.e.amt),bi=it.filter(x=>calBill(x.cat)).sort((a,b)=>b.e.amt-a.e.amt);
+  return{vi,bi,v:+vi.reduce((t,x)=>t+ +x.e.amt,0).toFixed(2),b:+bi.reduce((t,x)=>t+ +x.e.amt,0).toFixed(2)}}
+function openDay(k){dayK=k;renderDay();document.getElementById('dayMask').classList.add('on')}
+function renderDay(){const el=document.getElementById('daySheet');if(!el||!dayK)return;
+  const DF=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],d=new Date(dayK+'T00:00:00'),t=todayD(),c=cycleOf(S.current);
+  const st=new Date(c.st);st.setHours(0,0,0,0);const idx=Math.round((d-st)/864e5)+1,tot=Math.round((new Date(c.en).setHours(0,0,0,0)-st)/864e5)+1;
+  const y=Math.max(Math.floor(calPer),0),D=dayData(dayK),isT=+d===+t;
+  const prevOk=d>st,nextOk=d<t;
+  const row=x=>{const e=x.e,share=x.bill?0:(D.v?Math.round(e.amt/D.v*100):0);
+    return`<div class="ds-row${calBill(x.cat)?' bill':''}" ${x.fuel?'data-dfed':'data-ded'}="${e.id}">${share?`<span class="sh" style="width:${share}%"></span>`:''}<i class="cdot" style="background:${catColor(x.cat)}"></i>
+      <div class="ds-m"><b><bdi>${escapeHtml(e.note||catName(x.cat))}</bdi></b><small>${escapeHtml(catName(x.cat))} · ${escapeHtml(payName(e.pay))}${e.via?' · عبر برق':''}</small></div><span class="ds-a num">${n(e.amt)}</span></div>`};
+  const scale=Math.max(D.v,y)*1.1||1,over=D.v>y;
+  el.innerHTML=`<div class="ds-nav"><button class="ds-arr" type="button" data-dnav="-1" aria-label="اليوم اللي قبل"${prevOk?'':' disabled'}>›</button>
+      <div class="ds-title"><b>${isT?'اليوم — ':''}${DF[d.getDay()]} ${d.getDate()} ${AR_MONTHS[d.getMonth()]}</b><small>يوم ${idx} من ${tot} في الدورة</small></div>
+      <button class="ds-arr" type="button" data-dnav="1" aria-label="اليوم اللي بعد"${nextOk?'':' disabled'}>‹</button></div>
+    <div class="ds-total"><span class="num">${n(D.v)}</span><small>ريال</small></div>
+    <div class="ds-bar"><i style="width:${Math.min(D.v/scale*100,100)}%;background:${over?'var(--coral)':'var(--mint)'}"></i><em style="right:${y/scale*100}%"></em></div>
+    <div class="ds-chip ${over?'over':'ok'}">${D.v===0?'ما صرفت شي 👌':over?`فوق الـ <b class="num">${n(y)}</b> بـ <b class="num">${n(D.v-y)}</b>`:`✓ تحت الـ <b class="num">${n(y)}</b> — وفّرت <b class="num">${n(y-D.v)}</b>`}</div>
+    ${D.vi.length?`<div class="ds-h"><span>المصروف — من الأكبر</span><b class="num">${n(D.v)}</b></div>${D.vi.map(row).join('')}`:''}
+    ${D.bi.length?`<div class="ds-h"><span>فواتير — ما تنحسب على يومك</span><b class="num">${n(D.b)}</b></div>${D.bi.map(x=>row(Object.assign({bill:true},x))).join('')}`:''}
+    ${!D.vi.length&&!D.bi.length?'<div class="ds-empty">ما فيه عمليات مسجلة هاليوم</div>':''}
+    <button class="btn ghost full ds-add" type="button" data-dadd>＋ أضف مصروف لهذا اليوم</button>`}
+document.getElementById('dayMask').addEventListener('click',e=>{const $=i=>document.getElementById(i),close=()=>$('dayMask').classList.remove('on');
+  if(e.target.id==='dayMask'){close();return}
+  const nv=e.target.closest('[data-dnav]');if(nv){if(nv.disabled)return;const d=new Date(dayK+'T00:00:00');d.setDate(d.getDate()+ +nv.dataset.dnav);dayK=isoDay(d);renderDay();return}
+  const r=e.target.closest('[data-ded],[data-dfed]');if(r){close();if(r.dataset.ded)openEdit(r.dataset.ded,false);else openEdit(r.dataset.dfed,true);return}
+  if(e.target.closest('[data-dadd]')){close();$('eDate').value=dayK;$('addMask').classList.add('on');setTimeout(()=>$('amt').focus(),250)}});
 function renderRingTime(spent,cap){// علامة «اليوم» على الدائرة: وين المفروض تكون حسب الأيام
   const g=document.getElementById('ringTime');if(!g)return;const k=S.current,c=cycleOf(k),t=todayD();
   if(M().closed||t<c.st||t>c.en){g.innerHTML='';return}
@@ -3698,7 +3759,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30j';
+const APP_VER='2026-09-30k';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
 try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);// شراء برق + شحن مسجل يدوياً = نخلي الشراء (هو المصروف الحقيقي) ونشيل الشحن
