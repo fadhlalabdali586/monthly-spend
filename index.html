@@ -248,8 +248,8 @@ details.ln-person .ln-cnt{font-size:11.5px;color:var(--faint);font-weight:400}
   border-radius:var(--r-s);padding:0 12px;height:48px;font-family:inherit;font-size:16px;min-width:0}
 .entry select{flex:1.6}
 .entry input{flex:1}
-.entry input[type=number]{font-family:var(--num);direction:ltr;text-align:left}
-.entry input[type=number]::placeholder{font-family:'IBM Plex Sans Arabic';direction:rtl}
+.entry input[inputmode]{font-family:var(--num);direction:ltr;text-align:left}
+.entry input[inputmode]::placeholder{font-family:'IBM Plex Sans Arabic';direction:rtl}
 .entry input:focus,.entry select:focus{outline:none;border-color:var(--gold)}
 .entry.sub{margin-top:8px}
 .entry.sub select,.entry.sub input{height:42px;font-size:15px;background:transparent}
@@ -485,6 +485,36 @@ section[data-tab]:not(.tab-off){animation:fadeUp .3s ease both}
 .add-modal .more-btn{margin-top:6px}
 .big-amt::-webkit-outer-spin-button,.big-amt::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.big-amt{-moz-appearance:textfield}
 #brk{display:none}
+/* ===== تقويم الدورة (بدل الدائرة) ===== */
+.hero .ring-wrap{width:auto;aspect-ratio:auto;cursor:pointer;padding-top:2px}
+.hero .ring{display:none}
+.hero .ring-center{position:static;inset:auto}
+.hero .ring-lbl{margin:0 0 2px;font-size:13.5px}
+.hero-num{display:flex;align-items:baseline;justify-content:center;gap:8px}
+.hero .ring-center .gauge-big{font-size:68px;line-height:1.05;letter-spacing:-1px}
+.hero-u{font-size:15px;color:var(--muted)}
+.hero .home-pace{display:none}
+.cal{margin:16px 0 2px}
+.cal-h,.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-h span{text-align:center;font-size:11px;color:var(--faint)}
+.cal-h span.we{color:var(--muted)}
+.cal-g{margin-top:6px}
+.cl{height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font:500 12.5px var(--num);color:var(--faint);background:rgba(255,255,255,.025);border:1px solid var(--line-soft);position:relative;padding:0}
+.cl.out{background:none;border-color:transparent}
+.cl.ok{background:rgba(127,209,166,.20);border-color:rgba(127,209,166,.55);color:var(--text)}
+.cl.over{background:rgba(232,118,95,.24);border-color:rgba(232,118,95,.65);color:var(--text)}
+.cl.today{border:2px solid var(--gold);color:var(--text);box-shadow:0 0 0 4px rgba(201,139,78,.13)}
+.cl.pay{background:linear-gradient(160deg,#D9A067,#B8773E);border-color:transparent;color:#10231C;font-weight:600;flex-direction:column;line-height:1.05;font-size:12px}
+.cl.pay small{font:600 9px 'IBM Plex Sans Arabic',sans-serif}
+.cl.sel{outline:2px solid var(--text);outline-offset:1px}
+.cl[data-d]{cursor:pointer}
+.cl .cl-b{position:absolute;top:4px;left:4px;width:6px;height:6px;border-radius:50%;background:var(--lilac)}
+.cl .cl-m{position:absolute;top:-1px;right:5px;font:500 8px 'IBM Plex Sans Arabic',sans-serif;color:var(--muted)}
+.cal-leg{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 14px;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.cal-leg span{display:inline-flex;align-items:center;gap:5px}
+.cal-leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.cal-ins{margin-top:10px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.7;min-height:21px}
+.cal-ins b{color:var(--text);font-weight:500}
 #payBanner,#alertSec{display:none!important}
 .tasks{padding:6px 12px}
 .tk{display:flex;align-items:center;gap:8px;padding:11px 2px;font-size:14px;cursor:pointer}
@@ -693,7 +723,7 @@ textarea{width:100%;height:120px;background:var(--surface2);border:1px solid var
 .cfg-row:last-of-type{border-bottom:none}
 .cfg-row input[type=text]{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--line-soft);
   color:var(--text);border-radius:8px;padding:8px 9px;font-family:inherit;font-size:15px}
-.cfg-row input[type=number]{width:58px;background:var(--surface2);border:1px solid var(--line-soft);color:var(--text);
+.cfg-row input[inputmode]{width:58px;background:var(--surface2);border:1px solid var(--line-soft);color:var(--text);
   border-radius:8px;padding:8px 6px;font-family:var(--num);font-size:15px;text-align:left;direction:ltr}
 .cfg-row input:focus{outline:none;border-color:var(--gold)}
 .cfg-row .lbl{font-size:11px;color:var(--muted);white-space:nowrap}
@@ -774,11 +804,12 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
           <g id="ringTime"></g>
         </svg>
         <div class="ring-center">
-          <div class="gauge-big" id="remain">—</div>
-          <div class="ring-lbl" id="homeLbl">تقدر تصرف اليوم</div>
+          <div class="ring-lbl" id="homeLbl">تقدر تصرف كل يوم لين الراتب</div>
+          <div class="hero-num"><div class="gauge-big" id="remain">—</div><span class="hero-u">ريال</span></div>
           <div class="hide"><span class="num" id="capLbl">0</span></div>
         </div>
       </div>
+      <div class="cal" id="cal"></div>
       <div class="stats">
         <div><b class="num" id="spent">—</b><span>مصروف</span></div>
         <div><b class="num" id="daily">—</b><span>متوسط اليوم</span></div>
@@ -871,7 +902,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       </div>
       <div class="gauge" id="fGauge"><i id="fFill" style="width:0%"></i></div>
       <div class="entry">
-        <input id="fAmt" type="number" inputmode="decimal" placeholder="مبلغ التعبئة">
+        <input id="fAmt" type="text" inputmode="decimal" placeholder="مبلغ التعبئة">
         <button class="btn" id="fAdd">إضافة</button>
       </div>
       <div class="entry sub">
@@ -907,7 +938,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <summary>＋ سحبت من الادخار مؤقتاً</summary>
         <div class="entry">
           <input id="advNote" type="text" placeholder="ليش؟ (مثال: قسط السيارة)" style="font-family:inherit;direction:rtl;text-align:right">
-          <input id="advAmt" type="number" inputmode="decimal" placeholder="المبلغ">
+          <input id="advAmt" type="text" inputmode="decimal" placeholder="المبلغ">
         </div>
         <div class="entry sub"><input id="advDate" type="date"><button class="btn sm" id="advGo" type="button">سجّل</button></div>
         <div class="lh-tip">ينخصم من رقم الادخار الحين، ويطلع لك يوم الراتب كخطوة «رجّع للادخار». لما تحوّله وتعلّمها يرجع الرقم لحاله.</div>
@@ -924,7 +955,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <summary>＋ سلفة جديدة</summary>
         <div class="entry">
           <input id="lnWho" type="text" placeholder="لمين؟" style="font-family:inherit;direction:rtl;text-align:right">
-          <input id="lnAmt" type="number" inputmode="decimal" placeholder="المبلغ">
+          <input id="lnAmt" type="text" inputmode="decimal" placeholder="المبلغ">
         </div>
         <div class="entry sub">
           <input id="lnDate" type="date">
@@ -942,7 +973,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <div class="card salary-card">
       <div class="salary-box">
         <label for="salary">الراتب النازل</label>
-        <input class="salary-input num" id="salary" type="number" inputmode="decimal">
+        <input class="salary-input num" id="salary" type="text" inputmode="decimal">
         <span class="rial">ريال</span>
       </div>
       <div class="gross" id="gross"></div>
@@ -1093,7 +1124,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — الشراء بدل الشحن</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — تقويم الدورة + أرقام عربية</p></section>
 
 </div>
 
@@ -1118,7 +1149,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <h3>مصروف جديد</h3>
     <div class="note-lite">كاش، أو عملية ما وصلت رسالتها</div>
     <div id="manualBox">
-    <input class="f-in mono big-amt" id="amt" type="number" inputmode="decimal" placeholder="0.00">
+    <input class="f-in mono big-amt" id="amt" type="text" inputmode="decimal" placeholder="0.00">
     <div class="add-grid">
       <label><span>الفئة</span><select class="f-in" id="cat"></select></label>
       <label><span>طريقة الدفع</span><select class="f-in" id="pay"></select></label>
@@ -1129,16 +1160,16 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <div id="splitBox" class="hide">
         <div class="entry sub">
           <select id="pay2"></select>
-          <input id="amt2" type="number" inputmode="decimal" placeholder="كم دفعت بهذي الطريقة">
+          <input id="amt2" type="text" inputmode="decimal" placeholder="كم دفعت بهذي الطريقة">
         </div>
         <div class="note" style="margin-top:7px">اكتب المبلغ الكامل فوق مع طريقة الدفع الأولى، وهنا الجزء اللي دفعته بالطريقة الثانية. تنسجل عمليتين بنفس الفئة، وكل وحدة بطريقتها — فالكاش باك والمطابقة مع رسائل البنك يطلعون صح.</div>
       </div>
       <button class="more-btn" id="moreBtn" type="button">＋ تقسيم الفاتورة / كاش باك مختلف</button>
       <div id="moreBox" class="hide">
         <div class="entry sub">
-          <input id="eOther" type="number" inputmode="decimal" placeholder="منها لغيري">
+          <input id="eOther" type="text" inputmode="decimal" placeholder="منها لغيري">
           <input id="eWho" type="text" placeholder="لمين؟" style="font-family:inherit;direction:rtl;text-align:right">
-          <input id="eCbr" type="number" step="0.1" inputmode="decimal" placeholder="كاش %">
+          <input id="eCbr" type="text" step="0.1" inputmode="decimal" placeholder="كاش %">
         </div>
         <div class="note" style="margin-top:7px">اكتب المبلغ الكامل فوق، و«منها لغيري» حصة الشخص الثاني — تنسجل حصتك على السقف وحصته «نيابةً عن غيري» تلقائياً. «كاش باك %» لو نسبة هذا المتجر تختلف عن نسبة الفئة.</div>
       </div>
@@ -1193,11 +1224,11 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <div class="f-lbl">الاسم</div>
     <input class="f-in" id="oName" type="text" placeholder="مثلاً: اشتراك نتفلكس">
     <div class="f-lbl">المبلغ</div>
-    <input class="f-in mono" id="oAmt" type="number" inputmode="decimal">
+    <input class="f-in mono" id="oAmt" type="text" inputmode="decimal">
     <div class="f-lbl">التكرار</div>
     <select class="f-in" id="oFreq"><option value="monthly">شهري</option><option value="yearly">سنوي</option></select>
     <div class="row2" style="margin-top:0">
-      <div style="flex:1"><div class="f-lbl">اليوم</div><input class="f-in mono" id="oDay" type="number" inputmode="numeric" min="1" max="31"></div>
+      <div style="flex:1"><div class="f-lbl">اليوم</div><input class="f-in mono" id="oDay" type="text" inputmode="numeric" min="1" max="31"></div>
       <div style="flex:1" id="oMonWrap"><div class="f-lbl">الشهر</div><select class="f-in" id="oMon"></select></div>
     </div>
     <div class="f-lbl">ينتهي في (اختياري)</div>
@@ -1215,15 +1246,15 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <h3>إعداد الجمعية</h3>
     <div class="row2" style="margin-top:0">
       <div style="flex:1"><div class="f-lbl">بدأت في</div><input class="f-in" id="jStart" type="month"></div>
-      <div style="flex:1"><div class="f-lbl">عدد الأشهر</div><input class="f-in mono" id="jCount" type="number" inputmode="numeric"></div>
+      <div style="flex:1"><div class="f-lbl">عدد الأشهر</div><input class="f-in mono" id="jCount" type="text" inputmode="numeric"></div>
     </div>
     <div class="row2" style="margin-top:0">
       <div style="flex:1"><div class="f-lbl">دوري في</div><input class="f-in" id="jTurn" type="month"></div>
-      <div style="flex:1"><div class="f-lbl">يوم الدفع</div><input class="f-in mono" id="jDay" type="number" inputmode="numeric" min="1" max="31"></div>
+      <div style="flex:1"><div class="f-lbl">يوم الدفع</div><input class="f-in mono" id="jDay" type="text" inputmode="numeric" min="1" max="31"></div>
     </div>
     <div class="row2" style="margin-top:0">
-      <div style="flex:1"><div class="f-lbl">قسطي الشهري</div><input class="f-in mono" id="jShare" type="number" inputmode="decimal"></div>
-      <div style="flex:1"><div class="f-lbl">أقبض في دوري</div><input class="f-in mono" id="jPot" type="number" inputmode="decimal"></div>
+      <div style="flex:1"><div class="f-lbl">قسطي الشهري</div><input class="f-in mono" id="jShare" type="text" inputmode="decimal"></div>
+      <div style="flex:1"><div class="f-lbl">أقبض في دوري</div><input class="f-in mono" id="jPot" type="text" inputmode="decimal"></div>
     </div>
     <div class="f-lbl">ملاحظة (مثلاً: مشترك مع صديق)</div>
     <input class="f-in" id="jNote" type="text">
@@ -1239,7 +1270,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   <div class="modal">
     <h3 id="lpTitle">تسجيل سداد</h3>
     <div class="f-lbl">كم رجع لك؟</div>
-    <input class="f-in mono" id="lpAmt" type="number" inputmode="decimal">
+    <input class="f-in mono" id="lpAmt" type="text" inputmode="decimal">
     <div class="f-lbl">وش نوعه؟ (يطلع في الكشف)</div>
     <input class="f-in" id="lpNote" type="text" placeholder="تحويل">
     <div class="inc-chips" id="lpChips"><button type="button" data-t="تحويل">تحويل</button><button type="button" data-t="كاش">كاش</button><button type="button" data-t="خصم مقابل مشتريات">خصم مقابل مشتريات</button></div>
@@ -1260,7 +1291,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <div class="lh-form">
       <div class="f-lbl" id="lhFormT">إضافة حركة (قديمة أو جديدة)</div>
       <div class="lh-seg" id="lhSeg"><button type="button" data-k="add" class="on">+ مبلغ عليه</button><button type="button" data-k="pay">− سداد منه</button></div>
-      <div class="row2"><input class="f-in mono" id="lhAmt" type="number" inputmode="decimal" placeholder="المبلغ"><input class="f-in mono" id="lhDate" type="date"></div>
+      <div class="row2"><input class="f-in mono" id="lhAmt" type="text" inputmode="decimal" placeholder="المبلغ"><input class="f-in mono" id="lhDate" type="date"></div>
       <input class="f-in" id="lhNote" type="text" placeholder="البيان (مثال: تحويل، رصيد سابق، أكل)" style="margin-top:8px">
       <div class="lh-tip">التعديل هنا للسجل فقط — ما يحرّك رصيد الادخار. السداد الجديد اليوم سجّله من زر «سدّد» عشان يرجع للادخار.</div>
       <div class="row2">
@@ -1299,15 +1330,15 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <h3>مطابقة مع البنك</h3>
     <div class="note-lite">اكتب الأرصدة من البنك — لو فيه فرق عن اللي في اللوحة أسألك وش هو. الائتمانية تتحدّث لحالها من رسائل البنك.</div>
     <div class="f-lbl">الائتمانية — المتاح</div>
-    <input class="f-in mono" id="balC" type="number" inputmode="decimal" placeholder="المتاح في البطاقة">
+    <input class="f-in mono" id="balC" type="text" inputmode="decimal" placeholder="المتاح في البطاقة">
     <div class="f-lbl">حساب المصروف (مدى)</div>
-    <input class="f-in mono" id="balA" type="number" inputmode="decimal" placeholder="الرصيد">
+    <input class="f-in mono" id="balA" type="text" inputmode="decimal" placeholder="الرصيد">
     <div class="f-lbl">الباقي في برق (من آخر شحن)</div>
-    <input class="f-in mono" id="balQ" type="number" inputmode="decimal" placeholder="0">
+    <input class="f-in mono" id="balQ" type="text" inputmode="decimal" placeholder="0">
     <div class="f-lbl">الكاش اللي معك</div>
-    <input class="f-in mono" id="balK" type="number" inputmode="decimal" placeholder="مثال: 5">
+    <input class="f-in mono" id="balK" type="text" inputmode="decimal" placeholder="مثال: 5">
     <div class="f-lbl">حد الأمان للائتمانية (ما ينزل المتاح عنه)</div>
-    <input class="f-in mono" id="balFloor" type="number" inputmode="decimal" placeholder="7000">
+    <input class="f-in mono" id="balFloor" type="text" inputmode="decimal" placeholder="7000">
     <button class="more-btn" id="balPk" type="button" style="margin-top:8px">تعديل حصة الائتمانية من المصروف</button>
     <div class="row2" style="margin-top:16px">
       <button class="btn ghost" id="balX" type="button">إلغاء</button>
@@ -1320,7 +1351,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   <div class="modal">
     <h3>توزيع السقف على البطاقتين</h3>
     <div class="f-lbl">البطاقة الائتمانية (الأساسية — كاش باك)</div>
-    <input class="f-in mono" id="pkCredit" type="number" inputmode="decimal">
+    <input class="f-in mono" id="pkCredit" type="text" inputmode="decimal">
     <div class="pk-sum" id="pkSum"></div>
     <div class="pk-sug" id="pkSug"></div>
     <div class="row2" style="margin-top:16px">
@@ -1334,7 +1365,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   <div class="modal">
     <h3 id="incTitle">دخل إضافي</h3>
     <div class="f-lbl">المبلغ</div>
-    <input class="f-in mono" id="incAmt" type="number" inputmode="decimal" placeholder="0">
+    <input class="f-in mono" id="incAmt" type="text" inputmode="decimal" placeholder="0">
     <div class="f-lbl">وش هو؟</div>
     <input class="f-in" id="incNote" type="text" placeholder="مثلاً: عائد حساب الطوارئ">
     <div class="inc-chips" id="incChips"></div>
@@ -1356,13 +1387,13 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <div class="f-lbl">اسم الهدف</div>
     <input class="f-in" id="gName" type="text" placeholder="مثلاً: الزواج">
     <div class="f-lbl">المبلغ المستهدف</div>
-    <input class="f-in mono" id="gTarget" type="number" inputmode="decimal">
+    <input class="f-in mono" id="gTarget" type="text" inputmode="decimal">
     <div class="f-lbl">الرصيد الحالي يُحسب من (تقدر تختار أكثر من واحد)</div>
     <div class="g-links" id="gLinks"></div>
     <div id="gCurWrap"><div class="f-lbl">المبلغ المجمّع حالياً</div>
-    <input class="f-in mono" id="gCur" type="number" inputmode="decimal"></div>
+    <input class="f-in mono" id="gCur" type="text" inputmode="decimal"></div>
     <div class="f-lbl">كم تحوّل له شهرياً</div>
-    <input class="f-in mono" id="gMonthly" type="number" inputmode="decimal">
+    <input class="f-in mono" id="gMonthly" type="text" inputmode="decimal">
     <div class="f-lbl">الموعد المستهدف (اختياري)</div>
     <input class="f-in" id="gDue" type="month">
     <div class="row2" style="margin-top:16px">
@@ -1377,7 +1408,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   <div class="modal">
     <h3 id="edTitle">تعديل العملية</h3>
     <div class="f-lbl">المبلغ</div>
-    <input class="f-in mono" id="edAmt" type="number" inputmode="decimal">
+    <input class="f-in mono" id="edAmt" type="text" inputmode="decimal">
     <div id="edCatWrap">
       <div class="f-lbl">الفئة</div>
       <select class="f-in" id="edCat"></select>
@@ -1387,7 +1418,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     <div class="f-lbl">وسيلة الدفع</div>
     <select class="f-in" id="edPay"></select>
     <div class="f-lbl">نسبة الكاش باك % — اتركها فاضية لنسبة الفئة</div>
-    <input class="f-in mono" id="edCbr" type="number" step="0.1" inputmode="decimal">
+    <input class="f-in mono" id="edCbr" type="text" step="0.1" inputmode="decimal">
     <label class="chk" id="edGotWrap" style="margin-top:12px;font-size:13px;color:var(--text)"><input type="checkbox" id="edGot"> استلمت المبلغ من صاحبه</label>
     <div class="f-lbl">ملاحظة</div>
     <input class="f-in" id="edNote" type="text" placeholder="اختياري">
@@ -1751,7 +1782,7 @@ function render(){
     <div class="branch" data-kind="pre">
       <div class="card">
         <div class="b-name"><strong>${l.name} <span class="pretag">قبل النزول</span></strong><small>${l.dest}</small></div>
-        <input class="b-amt" type="number" inputmode="decimal" data-line="${l.id}" value="${l.amount}">
+        <input class="b-amt" type="text" inputmode="decimal" data-line="${l.id}" value="${l.amount}">
       </div></div>`:l.id==='save'?`
     <div class="branch" data-kind="save">
       <div class="card">
@@ -1763,7 +1794,7 @@ function render(){
       <div class="card">
         <div class="b-name"><strong>${l.name}</strong><small>${l.dest}</small>
           <div class="load"><i style="width:${(+l.amount/tot*100).toFixed(1)}%;background:${lineColor(l)}"></i></div></div>
-        <input class="b-amt" type="number" inputmode="decimal" data-line="${l.id}" value="${l.amount}">
+        <input class="b-amt" type="text" inputmode="decimal" data-line="${l.id}" value="${l.amount}">
       </div></div>`).join('');
   drawBalance();renderSweep();
   renderCap();renderFuel();renderCB();renderCfg();renderAssets();renderHist();
@@ -1852,7 +1883,7 @@ function renderCap(){
   mini.innerHTML=`<small>اليوم</small>${n(hv)}`;
   mini.style.color=hv<=0?'var(--coral)':'var(--text)';
   R.style.color=hv<=0?'var(--rust)':hv<25?'var(--amber)':'var(--text)';
-  const hl=document.getElementById('homeLbl');if(hl)hl.innerHTML=`تقدر تصرف اليوم<br><span class="h-sub">متاح <b class="num">${n(H.avail)}</b> · الراتب بعد ${H.dl} ${H.dl===1?'يوم':H.dl<=10?'أيام':'يوم'}</span>`;
+  const hl=document.getElementById('homeLbl');if(hl)hl.textContent='تقدر تصرف كل يوم لين الراتب';calPer=hv;
   document.getElementById('spent').textContent=n(spent);
   document.getElementById('capLbl').textContent=n(cap);
   const f=document.getElementById('gaugeFill');
@@ -1908,10 +1939,45 @@ function renderCap(){
   arcs(document.getElementById('ringArcs'),{c:120,r:100},C,keys.map(k=>({v:sums[k],color:catColor(k)})),scale,2.5,!ringDrawn&&!RM);
   ringDrawn=true;
   try{renderRingTime(spent,cap)}catch(e){}
+  try{renderCal()}catch(e){console.error(e)}
   try{renderWeek()}catch(e){}
   try{renderAllOps()}catch(e){}
   try{renderTasks()}catch(e){}
 }
+// ===== خانات الأرقام تقبل الأرقام العربية وتحوّلها لإنجليزي (بدون تغيير الكيبورد) =====
+function toEnDigits(v){v=String(v==null?'':v).replace(/[٠-٩]/g,d=>d.charCodeAt(0)-1632).replace(/[۰-۹]/g,d=>d.charCodeAt(0)-1776).replace(/٫/g,'.').replace(/[,٬،\s]/g,'');
+  const neg=/^-/.test(v);v=v.replace(/[^\d.]/g,'');const i=v.indexOf('.');if(i>=0)v=v.slice(0,i+1)+v.slice(i+1).replace(/\./g,'');return(neg?'-':'')+v}
+document.addEventListener('input',e=>{const t=e.target;if(!t||t.tagName!=='INPUT'||!/^(decimal|numeric)$/.test(t.getAttribute('inputmode')||''))return;
+  const v=t.value,nv=toEnDigits(v);if(nv===v)return;let p=null;try{p=t.selectionStart}catch(_){}
+  t.value=nv;if(p!=null)try{const q=Math.max(0,Math.min(nv.length,p-(v.length-nv.length)));t.setSelectionRange(q,q)}catch(_){}},true);
+var calPer=0,calSel=null;
+function calBill(cat){return cat==='bills'||/فواتير|اشتراك/.test(catName(cat)||'')}
+function renderCal(){// تقويم الدورة: كل يوم مربع — أخضر أقل من المسموح لليوم، أحمر أكثر، النقطة = فاتورة
+  const el=document.getElementById('cal');if(!el)return;const m=M();if(m.closed){el.innerHTML='';return}
+  const c=cycleOf(S.current),t=todayD(),D=864e5,ymd=d=>isoDay(d),y=Math.max(Math.floor(calPer),0);
+  const st=new Date(c.st);st.setHours(0,0,0,0);const en=new Date(c.en);en.setHours(0,0,0,0);const pay=new Date(en.getTime()+D);pay.setHours(0,0,0,0);
+  const noFuelLine=!m.lines.some(l=>l.kind==='fuel'),map={};
+  const add=(e,cat)=>{const r=map[e.date]=map[e.date]||{v:0,b:0,it:[]};if(calBill(cat))r.b+=+e.amt;else r.v+=+e.amt;r.it.push({a:+e.amt,l:e.note||catName(cat),cat,bill:calBill(cat)})};
+  m.expenses.forEach(e=>{if(inCap(e.cat))add(e,e.cat)});if(noFuelLine)(m.fuel||[]).forEach(e=>add(e,'fuel'));
+  const g0=new Date(st);g0.setDate(g0.getDate()-g0.getDay());const g1=new Date(pay);g1.setDate(g1.getDate()+(6-g1.getDay()));
+  let cells='';for(let d=new Date(g0);d<=g1;d.setDate(d.getDate()+1)){const k=ymd(d),dn=d.getDate();
+    if(d<st||d>pay){cells+='<div class="cl out"></div>';continue}
+    if(+d===+pay){cells+=`<div class="cl pay"><small>الراتب</small>${dn}</div>`;continue}
+    const r=map[k],past=d<t,isT=+d===+t,mon=dn===1?`<span class="cl-m">${AR_MONTHS[d.getMonth()]}</span>`:'';
+    let cls='cl';if(past)cls+=r&&r.v>y?' over':' ok';if(isT)cls+=' today'+(r&&r.v>y?' over':'');if(calSel===k)cls+=' sel';
+    cells+=`<div class="${cls}"${past||isT?` data-d="${k}"`:''}>${mon}${r&&r.b?'<span class="cl-b"></span>':''}${dn}</div>`}
+  const DN=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+  const line=(k,lbl)=>{const r=map[k];if(!r||(!r.v&&!r.b))return`${lbl} ما صرفت شي 👌`;
+    let s=`${lbl} صرفت <b class="num">${n(r.v)}</b>`;const vi=r.it.filter(x=>!x.bill);
+    if(calSel){const top=vi.sort((a,b)=>b.a-a.a).slice(0,3).map(x=>`${escapeHtml(x.l)} <b class="num">${n(x.a)}</b>`).join('، ');if(top)s+=` — ${top}`}
+    else{const by={};vi.forEach(x=>by[x.cat]=(by[x.cat]||0)+x.a);const tc=Object.keys(by).sort((a,b)=>by[b]-by[a])[0];if(tc&&vi.length>1&&by[tc]>=r.v*.4)s+=` — منها ${escapeHtml(catName(tc))} <b class="num">${n(by[tc])}</b>`}
+    if(r.b)s+=` · وفواتير <b class="num">${n(r.b)}</b>`;return s};
+  let ins='';if(calSel){const d=new Date(calSel+'T00:00:00');ins=line(calSel,`${+d===+t?'اليوم':DN[d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1)}`)}
+  else{const yd=new Date(t.getTime()-D);ins=yd>=st?line(ymd(yd),'أمس'):'أول يوم في الدورة — اضغط أي يوم تشوف وش صرفت فيه'}
+  el.innerHTML=`<div class="cal-h">${DN.map((x,i)=>`<span${i>=5?' class="we"':''}>${x}</span>`).join('')}</div><div class="cal-g">${cells}</div>
+    <div class="cal-leg"><span><i style="background:rgba(127,209,166,.55)"></i>أقل من <b class="num">${n(y)}</b></span><span><i style="background:rgba(232,118,95,.7)"></i>أكثر</span><span><i style="border-radius:50%;width:7px;height:7px;background:var(--lilac)"></i>فاتورة</span><span><i style="border:2px solid var(--gold);width:9px;height:9px"></i>اليوم</span></div>
+    <div class="cal-ins">${ins}</div>`}
+document.addEventListener('click',e=>{const c=e.target.closest('#cal [data-d]');if(!c)return;calSel=calSel===c.dataset.d?null:c.dataset.d;renderCal()});
 function renderRingTime(spent,cap){// علامة «اليوم» على الدائرة: وين المفروض تكون حسب الأيام
   const g=document.getElementById('ringTime');if(!g)return;const k=S.current,c=cycleOf(k),t=todayD();
   if(M().closed||t<c.st||t>c.en){g.innerHTML='';return}
@@ -1967,8 +2033,8 @@ function renderCfg(){
   document.getElementById('catCfg').innerHTML=S.cats.map(c=>`
     <div class="cfg-row" data-cat="${c.id}">
       <input type="text" data-f="name" value="${escapeHtml(c.name)}"${c.sys?' readonly':''}>
-      <span class="lbl">%</span><input type="number" step="0.1" data-f="cb" value="${c.cb}">
-      <span class="lbl">سقف</span><input type="number" data-f="cbCap" value="${c.cbCap}">
+      <span class="lbl">%</span><input type="text" inputmode="decimal" step="0.1" data-f="cb" value="${c.cb}">
+      <span class="lbl">سقف</span><input type="text" inputmode="decimal" data-f="cbCap" value="${c.cbCap}">
       <label class="chk"><input type="checkbox" data-f="inCap"${c.inCap!==false?' checked':''}>ضمن السقف</label>${c.inCap===false?`<label class="chk"><input type="checkbox" data-f="ret"${c.noRet?'':' checked'}>مسترد</label>`:''}${c.inCap===false&&c.noRet?`<select data-f="asset"><option value="">بدون خصم من الأصول</option>${(M().assets||[]).map(a=>`<option value="${a.id}"${c.asset===a.id?' selected':''}>يخصم من: ${escapeHtml(a.name)}</option>`).join('')}</select>`:''}
       ${c.sys?'<span class="del" style="opacity:.25">×</span>':`<button class="del" data-delcat="${c.id}">×</button>`}
     </div>`).join('');
@@ -1984,9 +2050,9 @@ function renderAssets(){
   applyGold();
   document.getElementById('assets').innerHTML=m.assets.map(a=>a.id==='gold'&&S.gold&&S.gold.grams?`
     <div class="asset"><div class="an">${a.name}<small>${goldSub()}</small><span class="gv">القيمة: <span class="num">${n(a.val)}</span> ريال</span></div>
-      <div class="gold-in"><input type="number" inputmode="decimal" data-ggrams value="${S.gold.grams}"><span>جرام</span></div></div>`:`
+      <div class="gold-in"><input type="text" inputmode="decimal" data-ggrams value="${S.gold.grams}"><span>جرام</span></div></div>`:`
     <div class="asset"><div class="an">${a.name}<small>${a.sub}</small></div>
-      <input type="number" inputmode="decimal" data-asset="${a.id}" value="${a.val}"></div>`).join('')+
+      <input type="text" inputmode="decimal" data-asset="${a.id}" value="${a.val}"></div>`).join('')+
     `<div class="net"><span style="font-size:12.5px;color:var(--muted)">إجمالي الأصول</span>
      <b class="num">${n(m.assets.reduce((s,a)=>s+ +a.val,0))}</b></div>`;
   try{renderWealth()}catch(e){}
@@ -3632,7 +3698,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30i';
+const APP_VER='2026-09-30j';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
 try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);// شراء برق + شحن مسجل يدوياً = نخلي الشراء (هو المصروف الحقيقي) ونشيل الشحن
