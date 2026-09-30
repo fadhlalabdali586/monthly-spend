@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="التوزيع">
+<meta name="apple-mobile-web-app-title" content="Kifaya">
 <meta name="theme-color" content="#0B1F1A">
 <link rel="manifest" href="manifest.json">
-<title>لوحة التوزيع — الميزانية الشهرية</title>
-<link rel="apple-touch-icon" href="icon-180.png?v=4">
-<link rel="icon" href="icon.png?v=2">
+<title>Kifaya — تكفيك لين الراتب</title>
+<link rel="apple-touch-icon" href="icon-180.png?v=5">
+<link rel="icon" href="icon.png?v=5">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@300;400;500;600;700&display=swap');
 
@@ -47,7 +47,8 @@ body{
 .bar-row{display:flex;align-items:center;gap:10px;height:58px}
 .bar-title{flex:1;min-width:0;display:grid}
 .bar-title>*{grid-area:1/1;align-self:center;justify-self:start}
-.bar h1{font-family:var(--num);font-size:18px;font-weight:600;margin:0;white-space:nowrap;transition:opacity .25s,transform .25s}
+.bar h1{font-family:var(--num);font-size:21px;font-weight:600;margin:0;white-space:nowrap;letter-spacing:.2px;line-height:1.15;transition:opacity .25s,transform .25s}
+.bar h1 small{display:block;font:400 11px 'IBM Plex Sans Arabic',sans-serif;color:var(--muted);letter-spacing:0;margin-top:1px}
 .bar.scrolled h1{opacity:0;transform:translateY(4px)}
 .mini{font-family:var(--num);font-size:15px;font-weight:500;padding:5px 11px;border-radius:20px;
   background:var(--surface2);color:var(--text);opacity:0;transform:translateY(-4px);
@@ -779,7 +780,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
 <header class="bar" id="topbar">
   <div class="wrap bar-row">
     <div class="bar-title">
-      <h1>لوحة التوزيع</h1>
+      <h1>Kifaya<small>تكفيك لين الراتب</small></h1>
       <span class="mini" id="miniRemain"></span>
     </div>
     <div class="head-tools">
@@ -1109,7 +1110,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — تحديث الاستقرار</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — Kifaya</p></section>
 
 </div>
 
@@ -2643,7 +2644,7 @@ function lockSupported(){return !!(window.PublicKeyCredential&&navigator.credent
 async function pinHash(pin,salt){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin));return b64(d)}
 async function lockRegister(){
   const cred=await navigator.credentials.create({publicKey:{
-    challenge:rnd(32),rp:{name:'لوحة التوزيع'},user:{id:rnd(16),name:'tawzee',displayName:'لوحة التوزيع'},
+    challenge:rnd(32),rp:{name:'Kifaya'},user:{id:rnd(16),name:'tawzee',displayName:'Kifaya'},
     pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
     authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000}});
   if(!cred)throw new Error('no-cred');return b64(cred.rawId);
@@ -3097,7 +3098,7 @@ async function drawStmt(k){
   y+=D.rows.length*rowH+30;x.fillStyle=C.line;x.fillRect(P,y,W-2*P,2);
   T('المتبقي',W-P,y+70,'600 34px '+AR,C.tx);T(n(D.rem)+' ريال',P,y+70,'600 40px '+NU,C.cu,'left','rtl');
   T('+ مبلغ عليك   ·   − سداد',W-P,H-44,'400 22px '+AR,C.mu);
-  T('لوحة التوزيع',P,H-44,'400 22px '+AR,C.mu,'left');
+  T('Kifaya',P,H-44,'500 24px '+NU,C.mu,'left','ltr');
   return c;
 }
 let stmtBlob=null,stmtName='';
@@ -3696,7 +3697,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30l';
+const APP_VER='2026-09-30m';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
 try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);// شراء برق + شحن مسجل يدوياً = نخلي الشراء (هو المصروف الحقيقي) ونشيل الشحن
