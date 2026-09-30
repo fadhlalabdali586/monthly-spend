@@ -438,6 +438,33 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(201,139
 
 /* ---------- tabs ---------- */
 .tab-off{display:none!important}
+/* ===== تحديث التصميم ===== */
+.ic{width:17px;height:17px;flex:none;vertical-align:-3px;margin-inline-end:6px;color:var(--gold)}
+.fab-opt .fo-i .ic{width:22px;height:22px;margin:0}
+.pay-banner .pb-ic .ic,.alert-card .al-i .ic{width:24px;height:24px;margin:0}
+.alert-card .al-i .ic{color:var(--coral)}
+.env-t{display:flex!important;align-items:center;justify-content:center;gap:0}
+.env-t .ic{width:15px;height:15px;margin-inline-end:5px}
+.ln-stmt .ic{width:15px;height:15px;vertical-align:-2px}
+.rd.fin b .ic{color:var(--mint);width:14px;height:14px}
+.wk-h strong{display:flex;align-items:center}
+/* قسم واحد = بطاقة وحدة */
+section.coll:not(.closed):has(>.sec-body>.card:first-child)>.sec-title,
+section.coll:not(.closed):has(>.sec-body>.gauge-card:first-child)>.sec-title{border-radius:var(--r-m) var(--r-m) 0 0;border-bottom-color:transparent}
+section.coll:not(.closed):has(>.sec-body>.card:first-child)>.sec-body,
+section.coll:not(.closed):has(>.sec-body>.gauge-card:first-child)>.sec-body{margin-top:0}
+section.coll:not(.closed)>.sec-body>.card:first-child,section.coll:not(.closed)>.sec-body>.gauge-card:first-child{border-top:0;border-top-left-radius:0;border-top-right-radius:0;padding-top:4px}
+/* الظروف بدون صناديق داخل صندوق */
+.bal-row{gap:0!important;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);padding:12px 0 8px;margin-top:16px!important}
+.env{background:none!important;border:0!important;border-radius:0!important;padding:4px 6px!important}
+.env+.env{border-inline-start:1px solid var(--line-soft)!important}
+.bal-when{margin-top:6px}
+/* حركة */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+section[data-tab]:not(.tab-off){animation:fadeUp .3s ease both}
+.env:active,.fab-opt:active,.wk-row:active,.ps:active,.goal:active,.ln-item:active,.w-line:active{transform:scale(.98);transition:transform .08s}
+.env,.fab-opt,.wk-row,.ps,.goal,.w-line{transition:transform .15s}
+#remain{transition:color .3s}
 /* ===== إعادة الهيكلة ===== */
 .tabbar .tb-add{flex:0 0 64px;max-width:64px;display:grid;place-items:center;padding:0}
 .tb-add i{font-style:normal;width:52px;height:52px;margin-top:-22px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#1A1208;font-size:28px;line-height:1;
@@ -1034,7 +1061,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — الدورة + الخريطة + مراجعة الأسبوع</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — تحديث التصميم</p></section>
 
 </div>
 
@@ -1093,10 +1120,10 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
 
 <div class="mask" id="fabMask">
   <div class="modal fab-modal">
-    <button type="button" class="fab-opt" data-fab="exp"><span class="fo-i">🧾</span><span><strong>مصروف</strong><small>كاش أو عملية ما وصلت</small></span></button>
-    <button type="button" class="fab-opt" data-fab="inc"><span class="fo-i">💵</span><span><strong>دخل إضافي</strong><small>عائد، بونص، مكافأة، هدية</small></span></button>
-    <button type="button" class="fab-opt" data-fab="fuel"><span class="fo-i">⛽</span><span><strong>تعبئة بنزين</strong><small>تنسجل في البنزين</small></span></button>
-    <button type="button" class="fab-opt" data-fab="loan"><span class="fo-i">🤝</span><span><strong>سلفة لأحد</strong><small>في المستحقات</small></span></button>
+    <button type="button" class="fab-opt" data-fab="exp"><span class="fo-i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.5-1.5 1.5-2-1.5L6 20.5z"/><path d="M9 8.5h6M9 12h6"/></svg></span><span><strong>مصروف</strong><small>كاش أو عملية ما وصلت</small></span></button>
+    <button type="button" class="fab-opt" data-fab="inc"><span class="fo-i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15"/></svg></span><span><strong>دخل إضافي</strong><small>عائد، بونص، مكافأة، هدية</small></span></button>
+    <button type="button" class="fab-opt" data-fab="fuel"><span class="fo-i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V5.5A1.5 1.5 0 0 1 6.5 4h6A1.5 1.5 0 0 1 14 5.5V20M3.5 20h12M5 11h9M14 8l3 2.5V16a1.5 1.5 0 0 0 3 0V9l-2.5-2.5"/></svg></span><span><strong>تعبئة بنزين</strong><small>تنسجل في البنزين</small></span></button>
+    <button type="button" class="fab-opt" data-fab="loan"><span class="fo-i"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2.5 19.5a5.5 5.5 0 0 1 11 0M16 8h5M18.5 5.5v5"/></svg></span><span><strong>سلفة لأحد</strong><small>في المستحقات</small></span></button>
   </div>
 </div>
 
@@ -1239,11 +1266,11 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
   <div class="modal">
     <h3>مطابقة مع البنك</h3>
     <div class="note-lite">اكتب الأرصدة من البنك — لو فيه فرق عن اللي في اللوحة أسألك وش هو. الائتمانية تتحدّث لحالها من رسائل البنك.</div>
-    <div class="f-lbl">💳 الائتمانية — المتاح</div>
+    <div class="f-lbl">الائتمانية — المتاح</div>
     <input class="f-in mono" id="balC" type="number" inputmode="decimal" placeholder="المتاح في البطاقة">
-    <div class="f-lbl">🏦 حساب المصروف (مدى)</div>
+    <div class="f-lbl">حساب المصروف (مدى)</div>
     <input class="f-in mono" id="balA" type="number" inputmode="decimal" placeholder="الرصيد">
-    <div class="f-lbl">💵 الكاش اللي معك</div>
+    <div class="f-lbl">الكاش اللي معك</div>
     <input class="f-in mono" id="balK" type="number" inputmode="decimal" placeholder="مثال: 5">
     <div class="f-lbl">حد الأمان للائتمانية (ما ينزل المتاح عنه)</div>
     <input class="f-in mono" id="balFloor" type="number" inputmode="decimal" placeholder="7000">
@@ -1344,11 +1371,12 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
 const KEY='tawzee_v2',PREV_KEY='tawzee_prev';
 try{if(!localStorage.getItem(KEY)){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k!==KEY&&/_budget_v2$/.test(k)){localStorage.setItem(KEY,localStorage.getItem(k));break}}}}catch(e){}
 const LINE_COLORS={car:'#8FB3D9',ball:'#8FD1A8',mom:'#D9A0BE',card:'#C98B4E',jam:'#B7C57A',save:'#5DB592',zamala:'#6FB9B6',fuel:'#E6CF93'};
-const CAT_COLORS={dining:'#E0896A',coffee:'#B98A62',fuel:'#C98B4E',bills:'#8FB3D9',grocery:'#8FD1A8',other:'#B7A7D9',carcare:'#6FB9B6',
-  pharmacy:'#E3A0B4',transport:'#C7CC7A',clothes:'#D8B4C8',gift:'#E8C77A',proxy:'#A9C7E0',fromsave:'#7EC4D4'};
-const XTRA=['#7EC4D4','#E3A86B','#A8D98F','#D59CC9','#D6C67A','#9BB6E8'];
+const CAT_COLORS={dining:'#9FA8E0',coffee:'#B39C86',fuel:'#6FA8C4',bills:'#A58BD6',grocery:'#58B6C8',other:'#8FA39B',carcare:'#D4C27C',
+  pharmacy:'#E0A3BA',transport:'#C58BCB',clothes:'#9CC2E6',gift:'#D9B58F',proxy:'#A9C7E0',fromsave:'#7EC4D4'};// ألوان الحالة (أخضر/نحاسي/أحمر) محجوزة للتنبيهات
+const XTRA=['#7EC4D4','#B5A3E0','#D59CC9','#C9C38A','#9BB6E8','#8FB8B0'];
 const lineColor=l=>LINE_COLORS[l.id]||l.color;
 const catColor=id=>CAT_COLORS[id]||XTRA[Math.max(0,S.cats.findIndex(c=>c.id===id))%XTRA.length];
+const IC={"card": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"5.5\" width=\"18\" height=\"13\" rx=\"2.5\"/><path d=\"M3 10h18M7 15h3\"/></svg>", "bank": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 9.5 12 4.5l8.5 5M5.5 10v7M10 10v7M14 10v7M18.5 10v7M3.5 19.5h17\"/></svg>", "cash": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2.5\" y=\"6.5\" width=\"19\" height=\"11\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2.6\"/><path d=\"M6 9.5v5M18 9.5v5\"/></svg>", "receipt": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 3.5h12v17l-2.5-1.5-2 1.5-1.5-1.5-1.5 1.5-2-1.5L6 20.5z\"/><path d=\"M9 8.5h6M9 12h6\"/></svg>", "income": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15\"/></svg>", "fuel": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 20V5.5A1.5 1.5 0 0 1 6.5 4h6A1.5 1.5 0 0 1 14 5.5V20M3.5 20h12M5 11h9M14 8l3 2.5V16a1.5 1.5 0 0 0 3 0V9l-2.5-2.5\"/></svg>", "loan": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2.5 19.5a5.5 5.5 0 0 1 11 0M16 8h5M18.5 5.5v5\"/></svg>", "doc": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 3.5h7l4 4v13H7z\"/><path d=\"M14 3.5v4h4M10 12h5M10 15.5h5\"/></svg>", "pen": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4.5 19.5l1-4L16 5a2.1 2.1 0 0 1 3 3L8.5 18.5z\"/></svg>", "check": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4.5\" y=\"3.5\" width=\"15\" height=\"17\" rx=\"2.5\"/><path d=\"M8.5 12l2.2 2.2L15.5 9.5\"/></svg>", "flag": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5.5 21V4M5.5 4h11l-2 4 2 4h-11\"/></svg>", "wallet": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7.5A2.5 2.5 0 0 1 6.5 5H18v3M4 7.5v10A2.5 2.5 0 0 0 6.5 20H20v-4M4 7.5A2.5 2.5 0 0 0 6.5 10H20v6\"/><circle cx=\"16\" cy=\"13\" r=\"1\"/></svg>", "alert": "<svg class=\"ic\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 4 2.5 19.5h19z\"/><path d=\"M12 10v4M12 17h.01\"/></svg>"};
 const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
 let ringDrawn=false,logAll=false;
 function arcs(el,r,C,items,total,gap,animate){
@@ -1365,6 +1393,7 @@ function arcs(el,r,C,items,total,gap,animate){
     }));
   }
 }
+function countTo(el,from,to){const t0=performance.now(),d=600;const step=t=>{const p=Math.min((t-t0)/d,1),e=1-Math.pow(1-p,3);el.textContent=n(Math.round(from+(to-from)*e));if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
 function countUp(el,to){
   if(RM){el.textContent=n(to);return}
   const t0=performance.now(),d=1100;
@@ -1784,7 +1813,7 @@ function renderCap(){
   const spent=capSpent(m);
   const left=cap-spent,pct=cap?Math.min(spent/cap*100,100):0;
   const R=document.getElementById('remain'),H=homeNums(left),hv=Math.floor(H.perDay);
-  if(!ringDrawn&&hv>0)countUp(R,hv);else R.textContent=n(hv);
+  if(!ringDrawn&&hv>0)countUp(R,hv);else if(R._v!=null&&R._v!==hv&&!RM)countTo(R,R._v,hv);else R.textContent=n(hv);R._v=hv;
   const mini=document.getElementById('miniRemain');
   mini.innerHTML=`<small>اليوم</small>${n(hv)}`;
   mini.style.color=hv<=0?'var(--coral)':'var(--text)';
@@ -2746,11 +2775,11 @@ function renderBal(pk){if(pk!==undefined)balPk=pk;const el=document.getElementBy
   const has=S.bal&&(S.bal.c||S.bal.a||S.bal.k),fl=S.balFloor!=null?+S.balFloor:7000;
   if(!has){el.innerHTML='<div class="bal-empty" data-balopen>＋ اكتب أرصدتك من البنك مرة وحدة — بعدها كل شي يتحدّث لحاله</div>';return}
   const c=balLive('c'),a=balLive('a'),k=balLive('k');
-  const card=(ic,t,v,sub,bad)=>`<div class="env" data-balopen><span class="env-t">${ic} ${t}</span><b class="num"${bad?' style="color:var(--coral)"':''}>${v==null?'—':n(v)}</b><small>${sub}</small></div>`;
+  const card=(ic,t,v,sub,bad)=>`<div class="env" data-balopen><span class="env-t">${IC[ic]}${t}</span><b class="num"${bad?' style="color:var(--coral)"':''}>${v==null?'—':n(v)}</b><small>${sub}</small></div>`;
   const cv=c==null?null:+(c-fl).toFixed(2);
   const last=Math.max(...['c','a','k'].map(g=>S.bal[g]?S.bal[g].at:0)),mins=Math.round((Date.now()-last)/6e4);
-  el.innerHTML=card('💳','الائتمانية',cv,c==null?'اضغط وأضف':cv<0?`سدّد ${n(-cv)} للبطاقة`:`المتاح ${n(c)}`,cv!=null&&cv<0)
-    +card('🏦','مدى',a,'حساب المصروف',a!=null&&a<0)+card('💵','كاش',k,k==null?'اضغط وأضف':'معك',false)
+  el.innerHTML=card('card','الائتمانية',cv,c==null?'اضغط وأضف':cv<0?`سدّد ${n(-cv)} للبطاقة`:`المتاح ${n(c)}`,cv!=null&&cv<0)
+    +card('bank','مدى',a,'حساب المصروف',a!=null&&a<0)+card('cash','كاش',k,k==null?'اضغط وأضف':'معك',false)
     +`<div class="bal-when">آخر مطابقة: ${mins<2?'الحين':mins<60?`قبل ${mins} دقيقة`:mins<1440?`قبل ${Math.round(mins/60)} ساعة`:`قبل ${Math.round(mins/1440)} يوم`} — اضغط أي بطاقة للمطابقة</div>`}
 function openBal(){const $=i=>document.getElementById(i),c=balLive('c'),a=balLive('a'),k=balLive('k');$('balC').value=c!=null?c:'';$('balA').value=a!=null?a:'';$('balK').value=k!=null?k:'';$('balFloor').value=S.balFloor!=null?S.balFloor:7000;$('balMask').classList.add('on')}
 function cycleOf(k){const pv=ymAdd(k,-1).split('-').map(Number),[y,m]=k.split('-').map(Number),st=salaryDayOf(pv[0],pv[1]),en=salaryDayOf(y,m);en.setDate(en.getDate()-1);return{st,en}}
@@ -2767,7 +2796,7 @@ function renderWeek(){// مراجعة الأسبوع: الجمعة أو لو ف�
   let ins=wk.length?`صرفت هالأسبوع <b class="num">${n(sum)}</b>${top?` — أكثرها ${catName(top)} (<span class="num">${n(by[top])}</span>)`:''}.`:'ما صرفت شي هالأسبوع 👌';
   if(top&&prev){const pm=S.months[prev],pt=pm.expenses.filter(e=>e.cat===top).reduce((t,e)=>t+e.amt,0)/4.3;if(pt>0&&by[top]>pt*1.3)ins+=` أعلى من متوسطك الأسبوعي (<span class="num">${n(pt)}</span>) بـ ${Math.round((by[top]/pt-1)*100)}%.`}
   sec.classList.remove('hide');
-  document.getElementById('weekIn').innerHTML=`<div class="wk-h"><strong>📋 مراجعة الأسبوع</strong><small>دقيقة وحدة</small></div>
+  document.getElementById('weekIn').innerHTML=`<div class="wk-h"><strong>${IC.check}مراجعة الأسبوع</strong><small>دقيقة وحدة</small></div>
     <div class="wk-row${P?'':' done'}" data-wk="inbox"><span>${P?'①':'✓'}</span><div>${P?`صنّف ${P} عملية من البنك`:'كل العمليات مصنفة'}</div></div>
     <div class="wk-row${bOld?'':' done'}" data-wk="bal"><span>${bOld?'②':'✓'}</span><div>${bOld?'طابق أرصدتك مع البنك':'الأرصدة مطابقة'}</div></div>
     <div class="wk-ins">${ins}</div>
@@ -3019,7 +3048,7 @@ function goalRoad(g,cur){// خريطة الهدف: المحطات الكبيرة
   for(const x of L){const mm=monthsUntil(x.m)+1;acc=cur+g.monthly*mm+L.filter(z=>z.m<=x.m).reduce((a,z)=>a+z.v,0);rows.push({m:x.m,t:`+${n(x.v)}`,acc})}
   let fin='';{let kk=1;while(kk<240&&cur+g.monthly*kk+L.filter(z=>monthsUntil(z.m)<kk).reduce((a,z)=>a+z.v,0)<t)kk++;fin=monthKey(new Date(new Date().getFullYear(),new Date().getMonth()+kk-1,1))}
   return`<div class="road">${rows.map(r=>`<div class="rd"><i></i><span>${lab(r.m)}</span><b class="num">${r.t}</b><small class="num">${n(Math.min(r.acc,t))}</small></div>`).join('')}
-    <div class="rd fin"><i></i><span>${lab(fin)}</span><b>🏁 خلصت</b><small class="num">${n(t)}</small></div></div>
+    <div class="rd fin"><i></i><span>${lab(fin)}</span><b>${IC.flag}خلصت</b><small class="num">${n(t)}</small></div></div>
     ${Math.abs(d)>=100?`<div class="rd-d" style="color:${d>0?'var(--mint)':'var(--coral)'}">${d>0?'متقدم':'متأخر'} عن الخطة بـ <span class="num">${n(Math.abs(d))}</span></div>`:'<div class="rd-d" style="color:var(--mint)">ماشي على الخطة ✓</div>'}`}
 function renderGoals(){
   const el=document.getElementById('goals');if(!el)return;
@@ -3295,8 +3324,8 @@ function paydaySteps(){
   m.lines.filter(l=>l.kind!=='pre'&&+l.amount>0).forEach(l=>{
     if(l.id==='car'&&carAdv){st.push({id:'l_car',name:l.name+' — انخصم مقدّماً ✓',sub:`البنك خصمه ${shortD(carAdv.date)} من الادخار، فمبلغه هالمرة يروح للادخار`,amt:+l.amount,pre:1});if(!rec.done.l_car){rec.done.l_car=true}return}
     if(l.kind==='cap'&&S.creditCap!=null&&+S.creditCap>0&&+S.creditCap<+l.amount){const cc=+S.creditCap;
-      st.push({id:'l_'+l.id+'_c',name:'💳 سدّد للائتمانية',sub:'حصة الائتمانية من المصروف — رصيدها يتحدّث من رسالة البنك',amt:cc,balC:1});
-      st.push({id:'l_'+l.id+'_a',name:'🏦 حوّل لحساب المصروف (مدى)',sub:'ينضاف لرصيد حساب المصروف في اللوحة',amt:+l.amount-cc,balA:1});return}
+      st.push({id:'l_'+l.id+'_c',name:'سدّد للائتمانية',sub:'حصة الائتمانية من المصروف — رصيدها يتحدّث من رسالة البنك',amt:cc,balC:1});
+      st.push({id:'l_'+l.id+'_a',name:'حوّل لحساب المصروف (مدى)',sub:'ينضاف لرصيد حساب المصروف في اللوحة',amt:+l.amount-cc,balA:1});return}
     st.push({id:'l_'+l.id,name:l.name,sub:l.dest||'',amt:+l.amount})});
   AV.forEach(a=>{const sl=m.lines.find(l=>l.id==='save'),sa=sl?+sl.amount:0;
     st.push({id:'adv_'+a.id,name:'رجّع للادخار: '+a.note,sub:sa?`حوّلها مع الادخار (${n(sa)}) — المجموع للادخار ${n(sa+ +a.amt)}`:'حوّله لحساب الادخار',amt:+a.amt,adv:1})});
@@ -3340,7 +3369,7 @@ function renderPayday(){
   const ps=document.getElementById('paySec');if(ps)ps.classList.toggle('hide',!(k<=5&&k>=-6));
   const b=document.getElementById('payBanner'),show=k<=2&&k>=-5&&done<st.length;
   b.classList.toggle('hide',!show);
-  if(show)document.getElementById('payBannerIn').innerHTML=`<span class="pb-ic">💰</span><div class="pb-t"><strong>يوم الراتب ${k===0?'اليوم':when}</strong><small>اضغط وامشِ على الخطوات</small></div><b class="num">${done}/${st.length}</b>`;
+  if(show)document.getElementById('payBannerIn').innerHTML=`<span class="pb-ic">${IC.wallet}</span><div class="pb-t"><strong>يوم الراتب ${k===0?'اليوم':when}</strong><small>اضغط وامشِ على الخطوات</small></div><b class="num">${done}/${st.length}</b>`;
 }
 document.getElementById('payday').addEventListener('click',async e=>{
   if(e.target.id==='payAll'){if(!await ask('تعلّم كل خطوات يوم الراتب؟ الأرصدة تتحدّث مرة وحدة.','علّم الكل','لا'))return;
@@ -3382,7 +3411,7 @@ function quickAlerts(){
 function renderAlerts(){
   const L=quickAlerts(),sec=document.getElementById('alertSec');if(!sec)return;
   sec.classList.toggle('hide',!L.length);
-  document.getElementById('alertIn').innerHTML=L.length?`<span class="al-i">⚠️</span><div>${L.map(x=>`<strong>${escapeHtml(x.t)}</strong><small>${escapeHtml(x.d)}</small>`).join('')}</div>`:'';
+  document.getElementById('alertIn').innerHTML=L.length?`<span class="al-i">${IC.alert}</span><div>${L.map(x=>`<strong>${escapeHtml(x.t)}</strong><small>${escapeHtml(x.d)}</small>`).join('')}</div>`:'';
 }
 document.getElementById('alertSec').addEventListener('click',()=>{setTab('settings')});
 async function runHealth(){
@@ -3485,7 +3514,7 @@ function renderLoans(){
   const personRow=g=>{const r=g.items.reduce((s,l)=>s+lnRemain(l),0),f=g.items[0],sv=g.items.every(l=>l.sav);
     return`<div class="ln-item"><span class="log-date"></span><span class="ln-n">الرصيد الحالي <small>(التفاصيل في السجل)</small></span><span class="num">${n(r)}</span><span class="gotbtn" style="opacity:${sv?1:.55};pointer-events:none">${sv?'ادخار ✓':'—'}</span><button class="gotbtn" data-lnpay="${f.id}">سدّد</button></div>`};
   document.getElementById('loanList').innerHTML=
-    (Object.entries(groups).map(([k,g])=>`<details class="ln-person" data-p="${escapeHtml(k)}"${lnOpen.has(k)?' open':''}><summary class="ln-head"><strong>${escapeHtml(g.name)} </strong><b class="num">${n(g.items.reduce((s,l)=>s+lnRemain(l),0))}</b></summary>${g.items.length>1?personRow(g):g.items.map(item).join('')}<div class="ln-acts"><button type="button" class="ln-stmt" data-lnhist="${escapeHtml(k)}">✎ سجل الحركات</button><button type="button" class="ln-stmt" data-lnstmt="${escapeHtml(k)}">📄 كشف الحساب</button></div></details>`).join('')
+    (Object.entries(groups).map(([k,g])=>`<details class="ln-person" data-p="${escapeHtml(k)}"${lnOpen.has(k)?' open':''}><summary class="ln-head"><strong>${escapeHtml(g.name)} </strong><b class="num">${n(g.items.reduce((s,l)=>s+lnRemain(l),0))}</b></summary>${g.items.length>1?personRow(g):g.items.map(item).join('')}<div class="ln-acts"><button type="button" class="ln-stmt" data-lnhist="${escapeHtml(k)}">${IC.pen}سجل الحركات</button><button type="button" class="ln-stmt" data-lnstmt="${escapeHtml(k)}">${IC.doc}كشف الحساب</button></div></details>`).join('')
      ||'<div class="empty" style="padding:14px 0 4px">ما عليك سلف لأحد حالياً.</div>')
     +(done.length?`<details class="ln-done"><summary>السلف المسددة (${done.length})</summary>${done.slice(-20).reverse().map(item).join('')}</details>`:'');
   const d=document.getElementById('lnDate');if(!d.value)d.value=isoDay();
@@ -3515,7 +3544,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30d';
+const APP_VER='2026-09-30e';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
 try{renderPrev()}catch(e){}
