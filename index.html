@@ -457,6 +457,17 @@ select.need{border-color:var(--gold)!important;box-shadow:0 0 0 3px rgba(201,139
 .add-modal .more-btn{margin-top:6px}
 .big-amt::-webkit-outer-spin-button,.big-amt::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.big-amt{-moz-appearance:textfield}
 #brk{display:none}
+.home-pace{text-align:center;font-size:12.5px;color:var(--muted);margin-top:12px}
+.week-card{padding:14px 16px}.wk-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}.wk-h small{color:var(--faint);font-size:12px}
+.wk-row{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.035);margin-top:6px;cursor:pointer;font-size:14px}
+.wk-row span{color:var(--gold);font-weight:600}.wk-row.done{opacity:.55}.wk-row.done span{color:var(--mint)}
+.wk-ins{font-size:13px;color:var(--muted);line-height:1.8;margin-top:10px}.wk-ins b{color:var(--text)}
+.road{position:relative;margin-top:12px;padding-right:14px;border-right:2px solid var(--line)}
+.rd{position:relative;display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:6px 0;font-size:13px}
+.rd i{position:absolute;right:-20px;width:10px;height:10px;border-radius:50%;background:var(--gold)}
+.rd b{color:var(--gold);font-size:13px}.rd small{color:var(--faint);font-size:12px;min-width:56px;text-align:left}
+.rd.fin i{background:var(--mint)}.rd.fin b{color:var(--mint)}
+.rd-d{font-size:12.5px;margin-top:8px}
 .bal-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0 4px}
 .env{padding:10px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid var(--line-soft);cursor:pointer;min-width:0;text-align:center}
 .env-t{display:block;font-size:12px;color:var(--muted);white-space:nowrap}
@@ -715,6 +726,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <svg class="ring" viewBox="0 0 240 240" aria-hidden="true">
           <circle class="ring-track" cx="120" cy="120" r="100"/>
           <g id="ringArcs" transform="rotate(-90 120 120)"></g>
+          <g id="ringTime"></g>
         </svg>
         <div class="ring-center">
           <div class="gauge-big" id="remain">—</div>
@@ -728,6 +740,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
         <div><b class="num" id="pace">—</b><span>حد الأسبوع</span></div>
       </div>
       <div class="pace-line" id="paceLine"></div>
+      <div class="home-pace" id="homePace"></div>
       <div class="bal-row" id="balRow"></div>
       <div class="pockets" id="pockets"></div>
       <i id="gaugeFill"></i>
@@ -735,6 +748,10 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
     </div>
   </section>
 
+
+  <section id="weekSec" class="hide" data-tab="today">
+    <div class="card week-card" id="weekIn"></div>
+  </section>
 
   <section id="alertSec" class="hide" data-tab="today">
     <div class="card alert-card" id="alertIn"></div>
@@ -1017,7 +1034,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — شبكة الأمان</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 30/9 — الدورة + الخريطة + مراجعة الأسبوع</p></section>
 
 </div>
 
@@ -1659,7 +1676,7 @@ function render(){
   initAuto();
   const m=M();
   document.getElementById('monthPick').innerHTML=Object.keys(S.months).sort().reverse()
-    .map(k=>`<option value="${k}"${k===S.current?' selected':''}>${monthLabel(k)}${S.months[k].closed?' ✓':''}</option>`).join('');
+    .map(k=>`<option value="${k}"${k===S.current?' selected':''}>دورة ${AR_MONTHS[+k.split('-')[1]-1]}${S.months[k].closed?' ✓':''}</option>`).join('');
   document.getElementById('salary').value=m.salary;
 
   fillSelects();
@@ -1827,7 +1844,18 @@ function renderCap(){
   document.getElementById('ringWrap').classList.toggle('over',spent>cap&&cap>0);
   arcs(document.getElementById('ringArcs'),{c:120,r:100},C,keys.map(k=>({v:sums[k],color:catColor(k)})),scale,2.5,!ringDrawn&&!RM);
   ringDrawn=true;
+  try{renderRingTime(spent,cap)}catch(e){}
+  try{renderWeek()}catch(e){}
 }
+function renderRingTime(spent,cap){// علامة «اليوم» على الدائرة: وين المفروض تكون حسب الأيام
+  const g=document.getElementById('ringTime');if(!g)return;const k=S.current,c=cycleOf(k),t=todayD();
+  if(M().closed||t<c.st||t>c.en){g.innerHTML='';return}
+  const tot=(c.en-c.st)/864e5+1,el=(t-c.st)/864e5+0.5,f=Math.min(Math.max(el/tot,0),1),a=f*2*Math.PI-Math.PI/2;
+  const x=120+100*Math.cos(a),y=120+100*Math.sin(a),xo=120+116*Math.cos(a),yo=120+116*Math.sin(a),xi=120+84*Math.cos(a),yi=120+84*Math.sin(a);
+  const fast=cap>0&&spent/cap>f+0.05;
+  g.innerHTML=`<line x1="${xi.toFixed(1)}" y1="${yi.toFixed(1)}" x2="${xo.toFixed(1)}" y2="${yo.toFixed(1)}" stroke="${fast?'#E8765F':'#EFEBDD'}" stroke-width="3" stroke-linecap="round"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5.5" fill="${fast?'#E8765F':'#EFEBDD'}" stroke="#0B1F1A" stroke-width="2"/>`;
+  const hl=document.getElementById('homePace');if(hl){const pd=Math.round(f*100),pm=cap?Math.round(spent/cap*100):0;
+    hl.innerHTML=`<span class="dot-t"></span> راح ${pd}% من الأيام · <span style="color:${fast?'var(--coral)':'var(--mint)'}">صرفت ${pm}% من السقف</span>`}}
 function renderFuel(){
   const m=M(),fl=m.lines.find(l=>l.kind==='fuel'),cap=fl?+fl.amount:0;
   const spent=m.fuel.reduce((s,e)=>s+e.amt,0),left=cap-spent,pct=cap?Math.min(spent/cap*100,100):0;
@@ -1956,7 +1984,7 @@ function addExp(){
   if(split){if(!pay2){toast('اختر طريقة الدفع الثانية');$('pay2').focus();return}
     if(pay2===pay){toast('الطريقتين نفس الشي — اختر طريقة ثانية');return}
     if(a2>=v-other){toast('الجزء الثاني لازم يكون أقل من المبلغ');return}}
-  const date=$('eDate').value||defaultDate();
+  const date=clampDate($('eDate').value||defaultDate());
   const note=$('eNote').value.trim(),who=$('eWho').value.trim();
   const base=Date.now(),mk=(id,cat,amt,nt)=>{
     const o={id:id+'',cat,amt:+amt.toFixed(2),date,d:shortD(date),pay,note:nt};
@@ -1991,7 +2019,7 @@ function addFuel(){
   if(!v||v<=0){toast('أدخل مبلغاً صحيحاً');return}
   const fp=document.getElementById('fPay');
   if(!fp.value){toast('اختر طريقة الدفع أولاً');fp.classList.add('need');fp.focus();return}
-  const date=document.getElementById('fDate').value||defaultDate();
+  const date=clampDate(document.getElementById('fDate').value||defaultDate());
   M().fuel.push({
     id:Date.now()+'',amt:v,date,d:shortD(date),
     pay:document.getElementById('fPay').value,
@@ -2040,7 +2068,7 @@ document.getElementById('edSave').addEventListener('click',()=>{
   if(!v||v<=0){toast('أدخل مبلغاً صحيحاً');return}
   e.amt=v;
   if(!editing.isFuel)e.cat=document.getElementById('edCat').value;
-  e.date=document.getElementById('edDate').value||e.date;
+  e.date=clampDate(document.getElementById('edDate').value||e.date);
   e.d=shortD(e.date);
   e.pay=document.getElementById('edPay').value;
   e.note=document.getElementById('edNote').value.trim();
@@ -2725,6 +2753,29 @@ function renderBal(pk){if(pk!==undefined)balPk=pk;const el=document.getElementBy
     +card('🏦','مدى',a,'حساب المصروف',a!=null&&a<0)+card('💵','كاش',k,k==null?'اضغط وأضف':'معك',false)
     +`<div class="bal-when">آخر مطابقة: ${mins<2?'الحين':mins<60?`قبل ${mins} دقيقة`:mins<1440?`قبل ${Math.round(mins/60)} ساعة`:`قبل ${Math.round(mins/1440)} يوم`} — اضغط أي بطاقة للمطابقة</div>`}
 function openBal(){const $=i=>document.getElementById(i),c=balLive('c'),a=balLive('a'),k=balLive('k');$('balC').value=c!=null?c:'';$('balA').value=a!=null?a:'';$('balK').value=k!=null?k:'';$('balFloor').value=S.balFloor!=null?S.balFloor:7000;$('balMask').classList.add('on')}
+function cycleOf(k){const pv=ymAdd(k,-1).split('-').map(Number),[y,m]=k.split('-').map(Number),st=salaryDayOf(pv[0],pv[1]),en=salaryDayOf(y,m);en.setDate(en.getDate()-1);return{st,en}}
+const dmy=d=>`${d.getDate()} ${AR_MONTHS[d.getMonth()]}`;
+function cycleLabel(k){const c=cycleOf(k);return`${dmy(c.st)} – ${dmy(c.en)}`}
+function clampDate(v){const t=isoDay();if(v&&v>t){toast('التاريخ في المستقبل — انحط تاريخ اليوم');return t}return v}
+function renderWeek(){// مراجعة الأسبوع: الجمعة أو لو فات أسبوع بدون مراجعة
+  const sec=document.getElementById('weekSec');if(!sec)return;const W=S.week||{},now=new Date(),D=864e5;
+  const due=(now.getDay()===5||now.getDay()===6)?(!W.at||now-W.at>2*D):(W.at&&now-W.at>8*D);
+  if(!due||M().closed){sec.classList.add('hide');return}
+  const P=(S.auto&&S.auto.pending||[]).length,ba=S.bal&&(S.bal.a||S.bal.c)?Math.min(...['a','c'].filter(g=>S.bal[g]).map(g=>S.bal[g].at)):0,bOld=!ba||now-ba>5*D;
+  const wk=M().expenses.filter(e=>inCap(e.cat)&&now-new Date(e.date)<7*D),sum=wk.reduce((t,e)=>t+e.amt,0),by={};wk.forEach(e=>by[e.cat]=(by[e.cat]||0)+e.amt);
+  const top=Object.keys(by).sort((a,b)=>by[b]-by[a])[0],prev=Object.keys(S.months).sort().filter(k=>k<S.current).slice(-1)[0];
+  let ins=wk.length?`صرفت هالأسبوع <b class="num">${n(sum)}</b>${top?` — أكثرها ${catName(top)} (<span class="num">${n(by[top])}</span>)`:''}.`:'ما صرفت شي هالأسبوع 👌';
+  if(top&&prev){const pm=S.months[prev],pt=pm.expenses.filter(e=>e.cat===top).reduce((t,e)=>t+e.amt,0)/4.3;if(pt>0&&by[top]>pt*1.3)ins+=` أعلى من متوسطك الأسبوعي (<span class="num">${n(pt)}</span>) بـ ${Math.round((by[top]/pt-1)*100)}%.`}
+  sec.classList.remove('hide');
+  document.getElementById('weekIn').innerHTML=`<div class="wk-h"><strong>📋 مراجعة الأسبوع</strong><small>دقيقة وحدة</small></div>
+    <div class="wk-row${P?'':' done'}" data-wk="inbox"><span>${P?'①':'✓'}</span><div>${P?`صنّف ${P} عملية من البنك`:'كل العمليات مصنفة'}</div></div>
+    <div class="wk-row${bOld?'':' done'}" data-wk="bal"><span>${bOld?'②':'✓'}</span><div>${bOld?'طابق أرصدتك مع البنك':'الأرصدة مطابقة'}</div></div>
+    <div class="wk-ins">${ins}</div>
+    <button class="btn full" type="button" data-wk="done" style="margin-top:10px">تم ✓</button>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-wk]');if(!b)return;const k=b.dataset.wk;
+  if(k==='inbox'){const s=document.getElementById('inboxSec');if(s&&!s.classList.contains('hide'))s.scrollIntoView({behavior:'smooth'})}
+  else if(k==='bal')openBal();
+  else if(k==='done'){S.week={at:Date.now()};save();renderWeek();toast('أسبوع موفق 👌')}});
 function nextPayday(){let d=paydayDate();if(daysTo(d)<=0){const t=todayD(),nx=ymAdd(`${t.getFullYear()}-${pad2(t.getMonth()+1)}`,1).split('-').map(Number);d=salaryDayOf(nx[0],nx[1]);if(daysTo(d)<=0){const n2=ymAdd(`${nx[0]}-${pad2(nx[1])}`,1).split('-').map(Number);d=salaryDayOf(n2[0],n2[1])}}return d}
 function homeNums(left){// الرقم الواحد: كم تقدر تصرف اليوم من الظروف الفعلية (أو من السقف لو ما فيه أرصدة)
   const dl=Math.max(daysTo(nextPayday()),1),has=S.bal&&(S.bal.c||S.bal.a||S.bal.k);let avail=left;
@@ -2959,6 +3010,17 @@ const gLinksOf=g=>Array.isArray(g.links)?g.links:(g.link?[g.link]:[]);
 function goalCur(g){const L=gLinksOf(g);if(L.length)return L.reduce((s,id)=>{const a=M().assets.find(x=>x.id===id);return s+(a?+a.val||0:0)},0);
   const extra=Object.values(S.months||{}).reduce((s,m)=>s+incList(m).filter(x=>x.dest==='goal:'+g.id).reduce((t,x)=>t+(+x.amt||0),0),0);return (+g.cur||0)+extra}
 const goalSrc=g=>{const L=gLinksOf(g);return L.length>1?'من: '+L.map(id=>{const a=M().assets.find(x=>x.id===id);return a?escapeHtml(a.name):''}).filter(Boolean).join(' + '):''};
+function goalRoad(g,cur){// خريطة الهدف: المحطات الكبيرة + هل أنت متقدم ولا متأخر عن الخطة
+  if(!g.lumps||!g.lumps.length||!(+g.monthly>0))return'';const t=+g.target||0;
+  if(!g.base){g.base={m:monthKey(new Date()),v:cur};save()}
+  const el=Math.max(monthsUntil(g.base.m)*-1,0),plan=g.base.v+g.monthly*el+g.lumps.filter(x=>x.m<monthKey(new Date())&&x.m>=g.base.m).reduce((a,x)=>a+x.v,0),d=cur-plan;
+  let acc=cur,rows=[],k=0;const L=g.lumps.filter(x=>monthsUntil(x.m)>=0).sort((a,b)=>a.m.localeCompare(b.m));
+  const lab=m=>{const[y,mo]=m.split('-').map(Number);return AR_MONTHS[mo-1]+' '+String(y).slice(2)};
+  for(const x of L){const mm=monthsUntil(x.m)+1;acc=cur+g.monthly*mm+L.filter(z=>z.m<=x.m).reduce((a,z)=>a+z.v,0);rows.push({m:x.m,t:`+${n(x.v)}`,acc})}
+  let fin='';{let kk=1;while(kk<240&&cur+g.monthly*kk+L.filter(z=>monthsUntil(z.m)<kk).reduce((a,z)=>a+z.v,0)<t)kk++;fin=monthKey(new Date(new Date().getFullYear(),new Date().getMonth()+kk-1,1))}
+  return`<div class="road">${rows.map(r=>`<div class="rd"><i></i><span>${lab(r.m)}</span><b class="num">${r.t}</b><small class="num">${n(Math.min(r.acc,t))}</small></div>`).join('')}
+    <div class="rd fin"><i></i><span>${lab(fin)}</span><b>🏁 خلصت</b><small class="num">${n(t)}</small></div></div>
+    ${Math.abs(d)>=100?`<div class="rd-d" style="color:${d>0?'var(--mint)':'var(--coral)'}">${d>0?'متقدم':'متأخر'} عن الخطة بـ <span class="num">${n(Math.abs(d))}</span></div>`:'<div class="rd-d" style="color:var(--mint)">ماشي على الخطة ✓</div>'}`}
 function renderGoals(){
   const el=document.getElementById('goals');if(!el)return;
   el.innerHTML=S.goals.map(g=>{
@@ -2979,7 +3041,7 @@ function renderGoals(){
       <div class="g-bar"><i style="width:${(pct*100).toFixed(1)}%"></i></div>
       <div class="g-nums"><span class="num">${n(cur)}</span> من <span class="num">${t?n(t):'؟'}</span>${t&&!done?` · باقي <span class="num">${n(rem)}</span>`:''}</div>
       ${goalSrc(g)?`<div class="g-src">${goalSrc(g)}</div>`:''}${g.plan?`<div class="g-src" style="color:var(--gold)">${escapeHtml(g.plan)}</div>`:''}
-      <div class="g-eta">${eta}</div></div>`;
+      <div class="g-eta">${eta}</div>${goalRoad(g,cur)}</div>`;
   }).join('')||'<div class="empty">ما عندك أهداف. أضف أول هدف.</div>';
 }
 let gEditing=null;
@@ -3052,7 +3114,7 @@ function renderReport(){
   const el=document.getElementById('report');if(!el)return;
   const keys=Object.keys(S.months).sort(),i=keys.indexOf(S.current);
   const m=M(),st=monthStats(m),pk=i>0?keys[i-1]:null,pm=pk&&S.months[pk],ps=pm&&monthStats(pm),hasPrev=ps&&ps.spent>0;
-  document.getElementById('repTitle').textContent='تقرير '+monthLabel(S.current)+(m.closed?'':' (للحين)');
+  document.getElementById('repTitle').textContent='تقرير الدورة: '+cycleLabel(S.current)+(m.closed?'':' (للحين)');
   const dl=(a,b)=>{if(!hasPrev||!b)return'';const p=Math.round((a-b)/b*100);if(!p)return'';return`<span class="delta ${p>0?'up':'down'}">${p>0?'↑':'↓'} ${Math.abs(p)}%</span>`};
   if(!st.spent){el.innerHTML='<div class="empty">ما فيه مصروفات مسجلة في هذا الشهر.</div>';return}
   const cs=Object.entries(st.cats).sort((a,b)=>b[1]-a[1]),max=cs[0][1];
@@ -3358,7 +3420,7 @@ async function runHealth(){
     if(!S.gold.at)add('warn','سعر الذهب','ما قدر يجيب السعر — يمكن مصدر السعر واقف مؤقتاً');
     else{const age=Date.now()-S.gold.at;add(age>2*D?'warn':'ok','سعر الذهب',`الجرام ${n(S.gold.price)} ريال — تحدّث ${ageTxt(age)}`)}}
   // 8 data integrity
-  const m=M(),seen={},dups=[];m.expenses.forEach(e=>{if(!e.note)return;const k=e.amt+'|'+e.date+'|'+e.note;if(seen[k])dups.push(e);else seen[k]=1});
+  const m=M(),seen={},dups=[];m.expenses.forEach(e=>{if(!e.note)return;const k=e.amt+'|'+e.date+'|'+e.note+'|'+(e.grp?e.grp+e.pay:'');if(seen[k])dups.push(e);else seen[k]=1});
   const nan=[...m.expenses,...m.fuel].filter(e=>!(+e.amt>0)).length;
   add(dups.length||nan?'warn':'ok','سلامة البيانات',dups.length||nan?[dups.length?`${dups.length} عملية مكررة محتملة: ${dups.slice(0,3).map(e=>e.note+' '+n(e.amt)).join('، ')}`:'',nan?`${nan} عملية مبلغها صفر أو غير صحيح`:''].filter(Boolean).join(' · '):`${m.expenses.length+m.fuel.length} عملية هذا الشهر — ما فيه تكرار أو أخطاء`);
   // 9 month/payday sanity
@@ -3367,13 +3429,13 @@ async function runHealth(){
     add(Math.abs(want-had)<0.5?'ok':'bad','السلف ↔ الادخار',Math.abs(want-had)<0.5?`متطابق — ${n(want)} مخصومة من الادخار`:`فرق ${n(want-had)} بين السلف والادخار — افتح أي سلفة واحفظها`)}catch(e){}
   try{const A2=S.advLedger||{},want=(S.adv||[]).filter(a=>!a.back).reduce((t,a)=>t+ +a.amt,0),had=Object.values(A2).reduce((t,v)=>t+(+v||0),0);
     if(want||had)add(Math.abs(want-had)<0.5?'ok':'bad','السحب المؤقت ↔ الادخار',Math.abs(want-had)<0.5?`متطابق — ${n(want)}`:`فرق ${n(want-had)}`)}catch(e){}
-  try{const m=M(),[y,mo]=S.current.split('-').map(Number),lo=new Date(y,mo-2,15),hi=new Date(y,mo,5),tm=Date.now()+2*D;
+  try{const m=M(),cy=cycleOf(S.current),lo=new Date(cy.st.getTime()-7*D),hi=new Date(cy.en.getTime()+3*D),tm=Date.now()+2*D;
     const odd=[...m.expenses,...m.fuel].filter(e=>{const t=new Date(e.date);return t<lo||t>hi||t.getTime()>tm});
-    add(odd.length?'warn':'ok','تواريخ العمليات',odd.length?`${odd.length} عملية تاريخها برّا الشهر أو في المستقبل: ${odd.slice(0,3).map(e=>(e.note||catName(e.cat))+' '+shortD(e.date)).join('، ')}`:'كلها داخل الشهر')}catch(e){}
+    add(odd.length?'warn':'ok','تواريخ العمليات',odd.length?`${odd.length} عملية تاريخها برّا الدورة أو في المستقبل: ${odd.slice(0,3).map(e=>(e.note||catName(e.cat))+' '+shortD(e.date)).join('، ')}`:'كلها داخل الدورة')}catch(e){}
   try{if(S.bal&&(S.bal.c||S.bal.a||S.bal.k)){const neg=['a','k'].filter(g=>{const v=balLive(g);return v!=null&&v<-0.5}),old=Math.min(...['a','k'].filter(g=>S.bal[g]).map(g=>S.bal[g].at));
     const age=Date.now()-old;
     add(neg.length?'bad':age>14*D?'warn':'ok','أرصدة الظروف',neg.length?`${neg.map(g=>ENV_NAME[g]).join(' و')} بالسالب — غالباً عملية مكررة أو دخل ما انسجل. طابق مع البنك`:age>14*D?`آخر مطابقة ${ageTxt(age)} — طابق مع البنك`:`سليمة — آخر مطابقة ${ageTxt(age)}`)}}catch(e){}
-  const pd=paydayDate();add('ok','يوم الراتب الجاي',`${pd.getDate()} ${AR_MONTHS[pd.getMonth()]} — ${['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][pd.getDay()]}`);
+  const pd=nextPayday();add('ok','يوم الراتب الجاي',`${pd.getDate()} ${AR_MONTHS[pd.getMonth()]} — ${['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][pd.getDay()]}`);
   S.health={at:Date.now(),res:out};save();renderHealth();renderAlerts();
   btn.disabled=false;btn.textContent='افحص الحين';
   const nb=out.filter(x=>x.st==='bad').length,nw=out.filter(x=>x.st==='warn').length;
@@ -3453,7 +3515,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-09-30c';
+const APP_VER='2026-09-30d';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
 try{renderPrev()}catch(e){}
