@@ -193,6 +193,8 @@ body.covered>*:not(#lockScreen){visibility:hidden}
 .inc-dest label:has(input:checked){border-color:var(--gold);background:rgba(201,139,78,.08)}
 .inc-dest input{accent-color:var(--gold);width:18px;height:18px;flex:none}
 .inc-row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
+.tag.inc{background:rgba(127,209,166,.12);color:var(--mint);border-color:rgba(127,209,166,.3)}
+.log-row.inc .log-amt,.ds-row.inc .ds-a{color:var(--mint)}
 .bn-top{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:6px}
 .bn-top small{display:block;color:var(--muted);font-size:12.5px;margin-bottom:2px}
 .bn-top b{font-size:26px;color:var(--gold);letter-spacing:-.3px}
@@ -1140,7 +1142,7 @@ input[type=checkbox],input[type=radio]{font-size:inherit!important}
       <textarea id="box" placeholder="ألصق نسختك هنا ثم اضغط استعادة" style="display:none"></textarea>
     </div>
   </section>
-  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 1/10 — الدخل التلقائي + خطة البونص</p></section>
+  <section data-tab="settings"><p style="text-align:center;opacity:.5;font-size:12px;margin:8px 0 0">إصدار اللوحة: 1/10ب — الدخل في العمليات + إصلاح برق</p></section>
 
 </div>
 
@@ -1929,6 +1931,11 @@ function opRow(e,attr){
     <span class="cb${cbv?'':' none'}">${cbv?'+'+n(cbv):'—'}</span>
   </div>`;
 }
+function incRow(x){// سطر دخل في قوائم العمليات — يفتح تعديل الدخل
+  return`<div class="log-row inc" data-inced="${x.id}"><div class="log-main"><i class="cdot" style="background:var(--mint)"></i><span class="tag inc">دخل</span><span class="log-date">${shortD(x.date)}</span>
+    <span class="tag pay">${escapeHtml(incDestName(x.dest))}</span><span class="log-amt" style="margin-right:auto">+${n(x.amt)}</span>${x.note?`<span class="log-note">${escapeHtml(x.note)}</span>`:''}</div><span class="cb none"></span></div>`}
+const opOrInc=x=>x._inc?incRow(x):opRow(x,'data-ed');
+const withInc=(L,m)=>L.concat(incList(m).map(x=>Object.assign({_inc:1},x)));
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 function renderCap(){
@@ -1960,8 +1967,8 @@ function renderCap(){
   try{renderBal(null)}catch(e){logErr(e)}
 
   const log=document.getElementById('log');
-  const all=[...m.expenses].sort(byDate),shown=all.slice(0,3);
-  log.innerHTML=m.expenses.length?shown.map(e=>opRow(e,'data-ed')).join('')
+  const all=withInc([...m.expenses],m).sort(byDate),shown=all.slice(0,3);
+  log.innerHTML=all.length?shown.map(opOrInc).join('')
     +(all.length>3?`<button class="btn ghost full" id="logMore" type="button">كل العمليات (${all.length}) ←</button>`:'')
     :'<div class="empty">لا مصروفات مسجّلة بعد.<br>سجّل كل عملية لتعرف أين تقف من السقف.</div>';
 
@@ -2008,8 +2015,8 @@ var dayK=null;
 function dayData(k){const m=M(),noFuelLine=!m.lines.some(l=>l.kind==='fuel'),it=[];
   m.expenses.forEach(e=>{if(e.date===k&&inCap(e.cat))it.push({e,fuel:false,cat:e.cat})});
   if(noFuelLine)(m.fuel||[]).forEach(e=>{if(e.date===k)it.push({e,fuel:true,cat:'fuel'})});
-  const vi=it.filter(x=>!calBill(x.cat)).sort((a,b)=>b.e.amt-a.e.amt),bi=it.filter(x=>calBill(x.cat)).sort((a,b)=>b.e.amt-a.e.amt);
-  return{vi,bi,v:+vi.reduce((t,x)=>t+ +x.e.amt,0).toFixed(2),b:+bi.reduce((t,x)=>t+ +x.e.amt,0).toFixed(2)}}
+  const vi=it.filter(x=>!calBill(x.cat)).sort((a,b)=>b.e.amt-a.e.amt),bi=it.filter(x=>calBill(x.cat)).sort((a,b)=>b.e.amt-a.e.amt),ii=incList(m).filter(x=>x.date===k);
+  return{vi,bi,ii,v:+vi.reduce((t,x)=>t+ +x.e.amt,0).toFixed(2),b:+bi.reduce((t,x)=>t+ +x.e.amt,0).toFixed(2),i:+ii.reduce((t,x)=>t+(+x.amt||0),0).toFixed(2)}}
 function openDay(k){dayK=k;renderDay();document.getElementById('dayMask').classList.add('on')}
 function renderDay(){const el=document.getElementById('daySheet');if(!el||!dayK)return;
   const DF=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],d=new Date(dayK+'T00:00:00'),t=todayD(),c=cycleOf(S.current);
@@ -2028,12 +2035,14 @@ function renderDay(){const el=document.getElementById('daySheet');if(!el||!dayK)
     <div class="ds-chip ${over?'over':'ok'}">${D.v===0?'ما صرفت شي 👌':over?`فوق الـ <b class="num">${n(y)}</b> بـ <b class="num">${n(D.v-y)}</b>`:`✓ تحت الـ <b class="num">${n(y)}</b> — وفّرت <b class="num">${n(y-D.v)}</b>`}</div>
     ${D.vi.length?`<div class="ds-h"><span>المصروف — من الأكبر</span><b class="num">${n(D.v)}</b></div>${D.vi.map(row).join('')}`:''}
     ${D.bi.length?`<div class="ds-h"><span>فواتير — ما تنحسب على يومك</span><b class="num">${n(D.b)}</b></div>${D.bi.map(x=>row(Object.assign({bill:true},x))).join('')}`:''}
-    ${!D.vi.length&&!D.bi.length?'<div class="ds-empty">ما فيه عمليات مسجلة هاليوم</div>':''}
+    ${D.ii.length?`<div class="ds-h"><span>دخل — ما يأثر على يومك</span><b class="num" style="color:var(--mint)">+${n(D.i)}</b></div>${D.ii.map(x=>`<div class="ds-row inc" data-dinc="${x.id}"><i class="cdot" style="background:var(--mint)"></i><div class="ds-m"><b><bdi>${escapeHtml(x.note||'دخل إضافي')}</bdi></b><small>${escapeHtml(incDestName(x.dest))}</small></div><span class="ds-a num">+${n(x.amt)}</span></div>`).join('')}`:''}
+    ${!D.vi.length&&!D.bi.length&&!D.ii.length?'<div class="ds-empty">ما فيه عمليات مسجلة هاليوم</div>':''}
     <button class="btn ghost full ds-add" type="button" data-dadd>＋ أضف مصروف لهذا اليوم</button>`}
 document.getElementById('dayMask').addEventListener('click',e=>{const $=i=>document.getElementById(i),close=()=>$('dayMask').classList.remove('on');
   if(e.target.id==='dayMask'){close();return}
   const nv=e.target.closest('[data-dnav]');if(nv){if(nv.disabled)return;const d=new Date(dayK+'T00:00:00');d.setDate(d.getDate()+ +nv.dataset.dnav);dayK=isoDay(d);renderDay();return}
   const r=e.target.closest('[data-ded],[data-dfed]');if(r){close();if(r.dataset.ded)openEdit(r.dataset.ded,false);else openEdit(r.dataset.dfed,true);return}
+  const ri=e.target.closest('[data-dinc]');if(ri){close();openInc(ri.dataset.dinc);return}
   if(e.target.closest('[data-dadd]')){close();$('eDate').value=dayK;$('addMask').classList.add('on');setTimeout(()=>$('amt').focus(),250)}});
 function renderFuel(){
   const m=M(),fl=m.lines.find(l=>l.kind==='fuel'),cap=fl?+fl.amount:0;
@@ -2270,6 +2279,7 @@ document.getElementById('edDel').addEventListener('click',async()=>{
 });
 document.getElementById('log').addEventListener('click',e=>{
   if(e.target.id==='logMore'){setTab('month');setTimeout(()=>document.getElementById('opsSec').scrollIntoView({behavior:'smooth',block:'start'}),60);return}
+  {const ir=e.target.closest('[data-inced]');if(ir){openInc(ir.dataset.inced);return}}
   const g=e.target.closest('[data-got]');
   if(g){
     e.stopPropagation();
@@ -2509,7 +2519,7 @@ function parseSms(t,sender){
   if(/قسط تمويل|خصم قسط/.test(t))return R('inst',{why:'قسط السيارة'});
   if(/راتب/.test(t)&&!/صادر/.test(t))return R('in',{inc:'sal',person:'الشركة'});// الراتب والبونص والمكافآت كلها تجي «حوالة واردة راتب»
   if(/حوال[ةه]/.test(t)){
-    const p=smsPerson(t);
+    const p=smsPerson(t)||(src==='barq'?clean((t.match(/(?:^|\n)\s*من\s*:?\s*([^\n\d*][^\n]*)/)||[])[1]):'');// برق الوارد: «من الاسم»
     const me=ownRe(),fx=fixedRe();
     if(SMS_OWN.test(p)||me&&(me.test(p)||new RegExp('الى\\s+(?:'+me.source+')','i').test(t)))return R('ignore',{why:'تحويل لنفسك',person:p});
     if(fx&&fx.test(p))return R('ignore',{why:'بند ثابت',person:p});
@@ -2587,8 +2597,9 @@ async function syncSms(manual){
       const h=hashStr(String(row.text));if(A.seen.includes(h))continue;A.seen.push(h);
       const p=parseSms(row.text,row.from),date=isoDay(row.time);
       {const tm=Date.parse(row.time)||Number(row.id)||Date.now(),tx=String(row.text);if(/شراء|مشتريات|POS|PoS|purchase/i.test(tx))A.lastBuy=Math.max(A.lastBuy||0,tm);if(/حوال/.test(tx))A.lastXfer=Math.max(A.lastXfer||0,tm);if(/ايداع/.test(tx))A.lastDep=Math.max(A.lastDep||0,tm);if(/سداد/.test(tx))A.lastSadad=Math.max(A.lastSadad||0,tm)}
-      try{const tx=String(row.text);if(p.why==='شحن محفظة'&&p.src==='barq'||/^شحن محفظة/.test(p.why||'')&&(/barq/i.test(p.merchant||'')||/\bbarq\b/i.test(tx))){const cc=cardDg('credit'),md=cardDg('mada');const src=cc&&tx.includes(cc)?'credit':md&&tx.includes(md)?'mada':null;if(src){S.barqSrc=src;barqTopUp(src,p.amt,Date.parse(row.time)||Date.now(),p.src)}}
-        if(p.src==='barq'&&p.kind==='ignore'&&/^(تحويل لنفسك|بند ثابت)$/.test(p.why||''))barqDrain(p.amt)}catch(e){logErr(e)}
+      try{const tx=String(row.text);if(p.why==='شحن محفظة'&&p.src==='barq'||/^شحن محفظة/.test(p.why||'')&&(/barq/i.test(p.merchant||'')||/\bbarq\b/i.test(tx))){const cc=cardDg('credit'),md=cardDg('mada');const src=cc&&tx.includes(cc)?'credit':md&&tx.includes(md)?'mada':null;if(src){S.barqSrc=src;barqTopUp(src,p.amt,Date.parse(row.time)||Date.now(),p.src)}
+          else barqTopUp('ext',p.amt,Date.parse(row.time)||Date.now(),p.src)}// شحن من بطاقة ثانية (الراجحي مثلاً): فلوس في برق بس مو من أظرفك
+        if(p.src==='barq'&&p.kind==='ignore'&&/^(تحويل لنفسك|بند ثابت)$/.test(p.why||'')){if(/وارد/.test(tx)&&!/صادر/.test(tx))barqTopUp('ext',p.amt,Date.parse(row.time)||Date.now(),'barq');else barqDrain(p.amt)}}catch(e){logErr(e)}
       let balG=null;try{const bv=smsBalance(row.text),pp=payIdFor(p.pay);balG=pp==='credit'?'c':pp==='mada'?'a':null;if(bv!=null&&balG&&bv!==p.amt)balAnchor(balG,bv,true);else balG=null}catch(e){balG=null}
       if(p.kind==='noise')continue;
       let pdm=false;try{pdm=paydayMatchSms(p,date);if(pdm)payBalSync()}catch(e){logErr(e)}
@@ -2633,9 +2644,9 @@ function renderInbox(){
       const mt=proxyMatches(p),I=p.inc||'',bp=bonusPlanOk(),sl=I==='sal'&&salLike(p.amt);
       const hint=I==='sal'?(sl?'نفس راتبك تقريباً — لو هو الراتب اضغط «هذا راتبي».':`مو راتبك المعتاد — بونص؟ مكافأة؟ ${bp?'وزّعه حسب خطتك بضغطة، أو اختر':'اختر'} وين يروح.${bp?'':' (تقدر تحدد «خطة البونص» من «أموالي»)'}`)
         :I==='co'?'من شركة — لو هو تعويض مصروف دفعته عن الشغل اختر «رجعت»، غيره سجّله دخل إضافي.'
-        :I==='profit'?'عائد شهري من حساب الطوارئ — يزيد سقف مصروفك هالشهر بنفس المبلغ.':'';
+        :I==='profit'?`عائد شهري من حساب الطوارئ. الزر يحطه في «${escapeHtml(incDestName(profitDest()))}» — ولو تبي مكان ثاني اختر «وجهة ثانية» ويتذكرها.`:'';
       const acts=(I==='sal'?(sl?'<button class="btn sm" data-sal>✓ هذا راتبي</button>':bp?'<button class="btn sm" data-bonus>✓ بونص — وزّعه حسب الخطة</button>':'')
-        :I==='profit'?'<button class="btn sm" data-inc-cap>✓ لمصروف الشهر</button>'
+        :I==='profit'?`<button class="btn sm" data-inc-prof>✓ لـ${escapeHtml(incDestName(profitDest()))}</button>`
         :I==='co'?'':loanMatches(p).map(l=>l.strong?`<button class="btn sm" data-lnmatch="${l.id}">✓ سداد سلفة: ${escapeHtml(l.person)} (${n(l.rem)})</button>`:`<button class="btn ghost sm" data-lnmatch="${l.id}">سداد من ${escapeHtml(l.person)}؟</button>`).join(''))
         +mt.map(e=>`<button class="btn sm" data-match="${e.id}">✓ رجعت: ${escapeHtml(e.note||catName(e.cat))}</button>`).join('')
         +`<button class="btn ${I==='profit'||I==='sal'&&(sl||bp)?'ghost ':''}sm" data-inc-in>＋ دخل إضافي${I==='profit'?' (وجهة ثانية)':''}</button>`+(I==='sal'&&!sl?'<button class="btn ghost sm" data-sal>هذا راتبي</button>':'')+'<button class="btn ghost sm" data-skip>تم</button>';
@@ -2672,13 +2683,13 @@ document.getElementById('inbox').addEventListener('click',e=>{
   if(e.target.closest('[data-ok]')){
     const cat=row.querySelector('[data-cat]').value;if(!cat){toast('اختر الفئة أولاً');return}
     ibApprove(id,cat);save();refreshAll();renderInbox();toast('تم التسجيل');
-  }else if(e.target.closest('[data-inc-in]')){const p=S.auto.pending.find(x=>x.id===id);if(p)openInc(null,{pid:id,amt:p.amt,date:p.date,note:p.inc==='sal'?'':p.kind==='dep'?'إيداع كاش':p.label.replace(/^وارد من\s*/,'')})}
+  }else if(e.target.closest('[data-inc-in]')){const p=S.auto.pending.find(x=>x.id===id);if(p)openInc(null,{pid:id,amt:p.amt,date:p.date,dest:p.inc==='profit'?profitDest():'',note:p.inc==='sal'?'':p.kind==='dep'?'إيداع كاش':p.label.replace(/^وارد من\s*/,'')})}
   else if(e.target.closest('[data-sal]')){const p=S.auto.pending.find(x=>x.id===id);if(!p)return;const r=paydayRec();r.done.salary=true;r.auto.salary=true;
     S.auto.log.unshift({d:p.date,k:'sal',a:p.amt,l:'',w:'الراتب ✓ (يدوي)'});ibRemove(id);save();renderInbox();renderPayday();toast('انعلّم «نزل الراتب» ✓')}
   else if(e.target.closest('[data-bonus]')){const p=S.auto.pending.find(x=>x.id===id);if(!p)return;if(M().closed){toast('الشهر مقفل');return}
     const parts=bonusApply(p.amt,p.date);ibRemove(id);save();refreshAll();renderInbox();toast('توزّع البونص: '+parts.map(x=>x.t+' '+n(x.a)).join(' · '))}
-  else if(e.target.closest('[data-inc-cap]')){const p=S.auto.pending.find(x=>x.id===id);if(!p)return;const m=M();if(m.closed){toast('الشهر مقفل');return}if(!Array.isArray(m.income))m.income=[];
-    m.income.push({id:'inc_'+Date.now(),amt:+(+p.amt).toFixed(2),date:p.date,note:p.label,dest:'cap'});ibRemove(id);save();refreshAll();renderInbox();toast('انضاف '+n(p.amt)+' لسقف الشهر ✓')}
+  else if(e.target.closest('[data-inc-prof]')){const p=S.auto.pending.find(x=>x.id===id);if(!p)return;const m=M();if(m.closed){toast('الشهر مقفل');return}if(!Array.isArray(m.income))m.income=[];
+    const d=profitDest();m.income.push({id:'inc_'+Date.now(),amt:+(+p.amt).toFixed(2),date:p.date,note:p.label,dest:d});ibRemove(id);save();refreshAll();renderInbox();toast('انضاف '+n(p.amt)+' لـ'+incDestName(d)+' ✓')}
   else if(e.target.closest('[data-dep]')){const p=S.auto.pending.find(x=>x.id===id);if(!p)return;const a=+p.amt;S.bal=S.bal||{};
     if(S.bal.k)S.bal.k.val=+(S.bal.k.val-a).toFixed(2);if(S.bal.a)S.bal.a.val=+(S.bal.a.val+a).toFixed(2);
     ibRemove(id);save();refreshAll();try{renderBal()}catch(er){logErr(er)}renderInbox();toast(S.bal.k||S.bal.a?'انتقل '+n(a)+' من الكاش لمدى ✓':'تم — أرصدتك مو مسجلة للحين')}
@@ -2905,6 +2916,7 @@ function incDestOptions(){
   return o;
 }
 function incDestName(d){const x=incDestOptions().find(o=>o.v===d);return x?x.t:'—'}
+function profitDest(){const O=incDestOptions().map(o=>o.v);return O.includes(S.profitDest)?S.profitDest:O.includes('asset:sav')?'asset:sav':'cap'}// وين تروح أرباح حساب الطوارئ بضغطة (يتذكر آخر اختيار)
 function openInc(id,pre){
   const m=M(),x=id?incList(m).find(z=>z.id===id):null,$=k=>document.getElementById(k);
   incEditing=x;incFromPending=pre&&pre.pid||null;
@@ -2939,7 +2951,7 @@ document.getElementById('incSave').addEventListener('click',()=>{
   if(incEditing){Object.assign(incEditing,{amt:+amt.toFixed(2),date,note,dest:r.value})}
   else m.income.push({id:'inc_'+Date.now(),amt:+amt.toFixed(2),date,note,dest:r.value});
   S.incLast=r.value;
-  if(incFromPending){ibRemove(incFromPending);renderInbox()}
+  if(incFromPending){const pp=S.auto.pending.find(x=>x.id===incFromPending);if(pp&&pp.inc==='profit')S.profitDest=r.value;ibRemove(incFromPending);renderInbox()}
   const was=!!incEditing;closeInc();save();refreshAll();renderIncome();
   toast(was?'انحفظ التعديل':(r.value==='cap'?'انضاف لسقف الشهر ✓':'انضاف ✓'));
 });
@@ -2994,9 +3006,11 @@ const ENV_NAME={c:'الائتمانية',a:'حساب المصروف',k:'الكا
 // ===== برق: الفلوس اللي انشحنت وما انصرفت لسا — البنك خصمها وقت الشحن، فتنضاف على رصيد الحساب اللي شحن منه =====
 function barqPoolOf(g){const P=S.barqPool||{};return +(BAL_PAYS[g]||[]).reduce((t,id)=>t+(+P[id]||0),0).toFixed(2)}
 function barqPoolSum(){const P=S.barqPool||{};return +Object.values(P).reduce((t,v)=>t+(+v||0),0).toFixed(2)}
-function barqTopUp(src,amt,t,from){if(!(+amt>0))return;const L=S.barqLastTop;if(L&&L.src===src&&L.from!==from&&Math.abs(L.a-amt)<0.01&&Math.abs(t-L.t)<15*6e4){S.barqLastTop=null;return}// نفس الشحنة: رسالة من برق + رسالة من البنك لنفس البطاقة
-  S.barqLastTop={a:+amt,t,src,from};S.barqPool=S.barqPool||{};S.barqPool[src]=+((+S.barqPool[src]||0)+ +amt).toFixed(2)}
-function barqDrain(amt){let r=+amt;S.barqPool=S.barqPool||{};const P=S.barqPool,ks=[S.barqSrc].concat(Object.keys(P)).filter((k,i,a)=>k&&a.indexOf(k)===i);
+function barqTopUp(src,amt,t,from){if(!(+amt>0))return;const L=S.barqLastTop;S.barqPool=S.barqPool||{};const P=S.barqPool;
+  if(L&&L.from!==from&&Math.abs(L.a-amt)<0.01&&Math.abs(t-L.t)<15*6e4&&(L.src===src||L.src==='ext'||src==='ext')){S.barqLastTop=null;// نفس الشحنة: رسالة من برق + رسالة من البنك
+    if(L.src==='ext'&&src!=='ext'){P.ext=Math.max(0,+((+P.ext||0)-amt).toFixed(2));P[src]=+((+P[src]||0)+ +amt).toFixed(2)}return}// رسالة البنك عرّفت البطاقة: تنتقل من «غير معروف» لها
+  S.barqLastTop={a:+amt,t,src,from};P[src]=+((+P[src]||0)+ +amt).toFixed(2)}
+function barqDrain(amt){let r=+amt;S.barqPool=S.barqPool||{};const P=S.barqPool,ks=['ext',S.barqSrc].concat(Object.keys(P)).filter((k,i,a)=>k&&a.indexOf(k)===i);
   ks.forEach(k=>{if(r<=0)return;const t=Math.min(+P[k]||0,r);if(t<=0)return;P[k]=+((+P[k])-t).toFixed(2);r=+(r-t).toFixed(2);
     const g=Object.keys(BAL_PAYS).find(g=>BAL_PAYS[g].includes(k));if(g&&S.bal&&S.bal[g])S.bal[g].val=+(S.bal[g].val-t).toFixed(2)})}
 function barqSpend(src,amt){S.barqPool=S.barqPool||{};S.barqPool[src]=Math.max(0,+((+S.barqPool[src]||0)-amt).toFixed(2))}
@@ -3047,16 +3061,20 @@ let opsF={acc:'all',cat:''};
 function renderAllOps(){const el=document.getElementById('allOps');if(!el)return;const m=M();
   const accOf=e=>BAL_PAYS.c.includes(e.pay)?'c':BAL_PAYS.a.includes(e.pay)?'a':BAL_PAYS.k.includes(e.pay)?'k':'o';
   const cats=[...new Set(m.expenses.map(e=>e.cat))];
-  document.getElementById('opsF').innerHTML=[['all','الكل'],['c','الائتمانية'],['a','مدى'],['k','كاش'],['o','غيرها']].map(([k,t])=>`<button type="button" data-oa="${k}" class="${opsF.acc===k?'on':''}">${t}</button>`).join('')
+  document.getElementById('opsF').innerHTML=[['all','الكل'],['c','الائتمانية'],['a','مدى'],['k','كاش'],['o','غيرها']].concat(incList(m).length?[['i','دخل']]:[]).map(([k,t])=>`<button type="button" data-oa="${k}" class="${opsF.acc===k?'on':''}">${t}</button>`).join('')
     +`<select id="opsCat"><option value="">كل الفئات</option>${cats.map(c=>`<option value="${c}"${opsF.cat===c?' selected':''}>${escapeHtml(catName(c))}</option>`).join('')}</select>`;
-  const L=[...m.expenses].filter(e=>(opsF.acc==='all'||accOf(e)===opsF.acc)&&(!opsF.cat||e.cat===opsF.cat)).sort(byDate);
-  document.getElementById('opsSum').innerHTML=`<span>${L.length} عملية</span><b class="num">${n(L.reduce((t,e)=>t+e.amt,0))}</b>`;
-  el.innerHTML=L.length?L.map(e=>opRow(e,'data-ed')).join(''):'<div class="empty">ما فيه عمليات بهالفلتر.</div>';
+  if(opsF.acc==='i'&&!incList(m).length)opsF.acc='all';
+  const E=opsF.acc==='i'?[]:[...m.expenses].filter(e=>(opsF.acc==='all'||accOf(e)===opsF.acc)&&(!opsF.cat||e.cat===opsF.cat));
+  const I=(opsF.acc==='all'&&!opsF.cat)||opsF.acc==='i'?incList(m):[],iS=I.reduce((t,x)=>t+(+x.amt||0),0),L=withInc(E,{income:I}).sort(byDate);
+  document.getElementById('opsSum').innerHTML=opsF.acc==='i'?`<span>${I.length} دخل</span><b class="num" style="color:var(--mint)">+${n(iS)}</b>`
+    :`<span>${E.length} عملية${I.length?` · دخل <span class="num" style="color:var(--mint)">+${n(iS)}</span>`:''}</span><b class="num">${n(E.reduce((t,e)=>t+e.amt,0))}</b>`;
+  el.innerHTML=L.length?L.map(opOrInc).join(''):'<div class="empty">ما فيه عمليات بهالفلتر.</div>';
   const cr=document.getElementById('cycRange');if(cr)cr.textContent=cycleLabel(S.current)}
 document.getElementById('opsF').addEventListener('click',e=>{const b=e.target.closest('[data-oa]');if(!b)return;opsF.acc=b.dataset.oa;renderAllOps()});
 document.getElementById('opsF').addEventListener('change',e=>{if(e.target.id==='opsCat'){opsF.cat=e.target.value;renderAllOps()}});
 document.getElementById('allOps').addEventListener('click',e=>{const g=e.target.closest('[data-got]');
   if(g){const x=M().expenses.find(z=>z.id===g.dataset.got);if(x){x.got=!x.got;save();refreshAll()}return}
+  const ir=e.target.closest('[data-inced]');if(ir){openInc(ir.dataset.inced);return}
   const r=e.target.closest('[data-ed]');if(r)openEdit(r.dataset.ed,false)});
 function renderTasks(){const sec=document.getElementById('taskSec'),el=document.getElementById('tasks');if(!sec||!el)return;const rows=[];
   const P=(S.auto&&S.auto.pending||[]).length;if(P)rows.push({ic:'receipt',t:`${P} عملية من البنك تنتظر تصنيف`,go:'inbox'});
@@ -3276,7 +3294,7 @@ document.getElementById('ibBadge').addEventListener('click',e=>{e.preventDefault
   $('balPk').addEventListener('click',()=>{on('balMask',false);openPockets()});
   $('balSave').addEventListener('click',async()=>{const v={c:$('balC').value,a:$('balA').value,k:$('balK').value},f=$('balFloor').value,q=$('balQ').value;on('balMask',false);
     if(f!=='')S.balFloor=+f;const msgs=[];
-    {const nq=q===''?0:+q;if(Math.abs(nq-barqPoolSum())>=0.01){const src=S.barqSrc||'credit',old={c:barqPoolOf('c'),a:barqPoolOf('a')};S.barqPool={};if(nq>0)S.barqPool[src]=+nq.toFixed(2);
+    {const nq=q===''?0:+q;if(Math.abs(nq-barqPoolSum())>=0.01){const src=S.barqSrc||'credit',old={c:barqPoolOf('c'),a:barqPoolOf('a')},ex=Math.min(+(S.barqPool||{}).ext||0,nq);S.barqPool={};if(ex>0)S.barqPool.ext=+ex.toFixed(2);if(nq-ex>0)S.barqPool[src]=+(nq-ex).toFixed(2);
       ['c','a'].forEach(g=>{const d=+(barqPoolOf(g)-old[g]).toFixed(2);if(d&&S.bal&&S.bal[g])S.bal[g].val=+(S.bal[g].val+d).toFixed(2)})}}
     for(const g of ['c','a','k']){if(v[g]==='')continue;const nv=+v[g],lv=balLive(g),old=lv==null?null:+(lv-barqPoolOf(g)).toFixed(2),d=old==null?0:+(old-nv).toFixed(2);
       if(old!=null&&d>=1&&g!=='c'){// نقص عن المتوقع = غالباً مصروف ما انسجل
@@ -3826,7 +3844,7 @@ document.getElementById('loanList').addEventListener('click',async e=>{
 });
 
 // ===== شبكة الأمان: نسخة محلية قبل أي تحديث + نسخة سحابية بعده =====
-const APP_VER='2026-10-01a';
+const APP_VER='2026-10-01b';
 try{const raw=localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw).appVer;if(v!==APP_VER)localStorage.setItem(PREV_KEY,JSON.stringify({ver:v||'قبل الشبكة',at:Date.now(),data:raw}))}}catch(e){}
 load();
 try{if(!S.migBarq1){S.migBarq1=1;const bq=(S.pays||[]).filter(x=>/برق/.test(x.name)).map(x=>x.id);// شراء برق + شحن مسجل يدوياً = نخلي الشراء (هو المصروف الحقيقي) ونشيل الشحن
