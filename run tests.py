@@ -236,8 +236,93 @@ async def main():
         check('استرجاع النسخة المحلية ما ينكتب فوقه', ids == ['old1'], ids)
         await ctx.close()
 
-        # 13) صحة النظام وسجل الأخطاء بعد جولة كاملة
-        print('١٣) صحة النظام')
+        # 13) الأسماء بصيغة الأهلي الجديدة «مرسل:» و«إلى:»
+        print('١٣) أسماء الأهلي')
+        ctx, pg = await fresh()
+        r = await pg.evaluate("""[
+          parseSms('حوالة واردة داخلية\\nمبلغ:SAR 296\\nمرسل:سالم الأحمد\\nمن:*0000*\\nإلى:*1111*\\nفي:18:35 28/09/26','SNB-AlAhli'),
+          parseSms('حوالة صادرة داخلية\\nمبلغ:SAR 300\\nإلى:الوالدة الكريمة\\nإلى:*0000*\\nفي:08:25 29/09/26','SNB-AlAhli'),
+          parseSms('حوالة واردة داخلية\\nمبلغ:SAR 100\\nمرسل:TEST USER\\nمن:*0000*\\nإلى:*1111*\\nفي:10:00 29/09/26','SNB-AlAhli'),
+          parseSms('حوالة واردة داخلية\\nمبلغ:SAR 2600\\nمرسل:شركة تجربة للصناعة المحد\\nمن:*0000*\\nإلى:*1111*\\nفي:14:19 29/09/26','SNB-AlAhli'),
+          parseSms('حوالة صادرة داخلية\\nمبلغ:SAR 1000\\nإلى:سالم الأحمد\\nإلى:*5404*\\nفي:08:25 29/09/26','SNB-AlAhli')
+        ].map(p=>[p.kind,p.person||'',p.inc||'',p.why||''])""")
+        check('«مرسل:الاسم» ينقرى', r[0][:2] == ['in', 'سالم الأحمد'], r[0])
+        check('«إلى:الوالدة» = بند ثابت يتجاهل', r[1][0] == 'ignore' and r[1][3] == 'بند ثابت', r[1])
+        check('«مرسل:اسمك» = تحويل لنفسك', r[2][0] == 'ignore' and r[2][3] == 'تحويل لنفسك', r[2])
+        check('مرسل شركة = دخل/تعويض مو سلفة', r[3][0] == 'in' and r[3][2] == 'co', r[3])
+        check('«إلى:الاسم» في الصادرة ينقرى (مو رقم الحساب)', r[4][:2] == ['out', 'سالم الأحمد'], r[4])
+        await pg.evaluate("addLoan('سالم',296,'2026-09-01','','manual');save()")
+        await sync(pg, [row(1, '2026-09-28T18:35:00', 'SNB-AlAhli', 'حوالة واردة داخلية\nمبلغ:SAR 296\nمرسل:سالم الأحمد\nمن:*0000*\nإلى:*1111*\nفي:18:35 28/09/26')])
+        m = await pg.evaluate("JSON.stringify(loanMatches(S.auto.pending[0]).map(x=>[x.person,x.strong]))")
+        check('سداد السلفة يتعرف بالصيغة الجديدة', json.loads(m) == [['سالم', True]], m)
+        await ctx.close()
+
+        # 14) الراتب والبونص
+        print('١٤) الراتب والبونص')
+        SAL = lambda amt, d='28/09/26': f"حوالة واردة راتب\nمبلغ SAR {amt}\nحساب*0000\nفي 06:48 {d}"
+        ctx, pg = await fresh()
+        await pg.evaluate("M().salary=5000;save()")
+        await sync(pg, [row(1, '2026-09-28T06:48:00', 'SNB-AlAhli', SAL(5000))])
+        v = await pg.evaluate("[S.auto.pending.length, paydayRec().done.salary===true, paydayRec().auto.salary===true]")
+        check('حوالة الراتب المعتادة تعلّم «نزل الراتب» وما تطلع عملية', v == [0, True, True], v)
+        await sync(pg, [row(2, '2026-09-28T06:49:00', 'SNB-AlAhli', SAL(9000))])
+        v = await pg.evaluate("[S.auto.pending.length, S.auto.pending[0]&&S.auto.pending[0].inc, S.auto.pending[0]&&S.auto.pending[0].label]")
+        check('حوالة «راتب» بمبلغ ثاني (بونص) تطلع في العمليات الجديدة', v[0] == 1 and v[1] == 'sal', v)
+        await pg.evaluate("renderInbox();setTab('today')")
+        check('بدون خطة: ما فيه زر «وزّعه حسب الخطة»', await pg.evaluate("!document.querySelector('[data-bonus]')"))
+        await pg.evaluate("(()=>{const o=incDestOptions().map(x=>x.v);S.bonus={plan:{[o[0]]:30,[o[1]]:70},lastBasic:5000};save();renderInbox();setTab('today')})()")
+        await pg.click('[data-bonus]'); await pg.wait_for_timeout(250)
+        v = await pg.evaluate("JSON.stringify([S.auto.pending.length, M().income.map(x=>x.amt), M().income.reduce((t,x)=>t+x.amt,0), S.bonus.last])")
+        check('«وزّعه حسب الخطة» يقسم 30/70 ويحفظ آخر بونص', json.loads(v) == [0, [2700, 6300], 9000, 9000], v)
+        await sync(pg, [row(3, '2026-09-29T09:00:00', 'SNB-AlAhli', SAL(5000, '29/09/26'))])
+        v = await pg.evaluate("[S.auto.pending.length, !!document.querySelector('[data-ib] [data-sal]')]")
+        check('حوالة راتب ثانية بعد الراتب ما تنبلع — تطلع وتسألك', v[0] == 1, v)
+        await pg.evaluate("renderInbox();setTab('today')")
+        await pg.click('[data-sal]'); await pg.wait_for_timeout(200)
+        check('«هذا راتبي» يشيلها', await pg.evaluate("S.auto.pending.length") == 0)
+        await ctx.close()
+
+        # 15) الأرباح وإيداع الصراف وسداد الفواتير
+        print('١٥) الأرباح والإيداع والفواتير')
+        ctx, pg = await fresh()
+        await pg.evaluate("balAnchor('k',500);balAnchor('a',600);save()")
+        await sync(pg, [row(1, '2026-09-30T07:25:00', 'AlRajhiBank', 'ايداع:الأرباح الشهرية لحساب الادخار\nمبلغ:SAR 40\nإلى:0000\n07:25 30/9/26'),
+                        row(2, '2026-09-30T10:00:00', 'SNB-AlAhli', 'ايداع صراف آلي\nمبلغ SAR 100\nحساب 000*000\nفي 10:00 30/09/26'),
+                        row(3, '2026-09-30T19:45:00', 'SNB-AlAhli', 'سداد فاتورة\nمبلغ SAR 200\nمن 000*000\nمفوتر 123\nفاتورة 0000\nفي 19:45 30/09/26')])
+        v = await pg.evaluate("JSON.stringify(S.auto.pending.map(p=>[p.kind,p.inc||'',p.label,p.cat||'',p.mkey||'']))")
+        P = json.loads(v)
+        check('الأرباح تطلع «عائد حساب الطوارئ»', P[0][:3] == ['in', 'profit', 'عائد حساب الطوارئ'], P)
+        check('إيداع الصراف يطلع كإيداع كاش', P[1][0] == 'dep', P)
+        check('سداد فاتورة = مصروف فواتير', P[2][0] == 'expense' and P[2][2] == 'سداد فاتورة · مفوتر 123' and P[2][3] == 'bills' and P[2][4] == 'sadad123', P)
+        cap0 = await pg.evaluate("incCapSum(M())")
+        await pg.evaluate("renderInbox();setTab('today')")
+        await pg.click('[data-inc-cap]'); await pg.wait_for_timeout(200)
+        check('«لمصروف الشهر» يزيد السقف 40', await pg.evaluate("incCapSum(M())") - cap0 == 40, await pg.evaluate("incCapSum(M())"))
+        await pg.click('[data-dep]'); await pg.wait_for_timeout(200)
+        v = await pg.evaluate("[balLive('k'),balLive('a')]")
+        check('«من كاشي لحساب المصروف» ينقل 100 من الكاش لمدى', v == [400, 700], v)
+        await ctx.close()
+
+        # 16) خطة البونص في الأهداف
+        print('١٦) خطة البونص')
+        ctx, pg = await fresh()
+        await pg.evaluate("setTab('goals')"); await pg.wait_for_timeout(200)
+        check('بطاقة البونص تطلع وفيها تنبيه بدون خطة', await pg.evaluate("!!document.querySelector('#bonusCard .bn-nudge')"))
+        await pg.fill('#bnLast', '٩٠٠٠'); await pg.fill('#bnLastB', '5000'); await pg.fill('#bnBasic', '5500')
+        ins = await pg.query_selector_all('[data-bnp]')
+        await ins[0].fill('40'); await ins[1].fill('50')
+        check('المجموع يتنبه لو مو 100', '90' in await pg.inner_text('#bnSum'), await pg.inner_text('#bnSum'))
+        await pg.click('#bnSave'); await pg.wait_for_timeout(150)
+        check('ما يحفظ والمجموع 90%', await pg.evaluate("!(S.bonus&&S.bonus.plan)"))
+        await ins[1].fill('60')
+        await pg.click('#bnSave'); await pg.wait_for_timeout(250)
+        v = await pg.evaluate("[S.bonus.last,S.bonus.lastBasic,S.bonus.basic,bonusPlanOk(),document.querySelector('.bn-top b').textContent]")
+        check('يحفظ الأرقام (والعربي ينقلب) والخطة', v[:4] == [9000, 5000, 5500, True], v)
+        check('المتوقع = 1.8 × الأساسي الحالي (≈ 9,900)', '9,900' in v[4], v[4])
+        await ctx.close()
+
+        # 17) صحة النظام وسجل الأخطاء بعد جولة كاملة
+        print('١٧) صحة النظام')
         ctx, pg = await fresh()
         await sync(pg, [row(1, '2026-09-30T12:00:00', 'SNB-AlAhli', AHLI_CREDIT_BUY('10.00', 'Test', '7990.00'))])
         for t in ['month', 'goals', 'settings', 'today']:
