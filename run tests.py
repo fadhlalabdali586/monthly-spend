@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""اختبارات «لوحة التوزيع» — ملف واحد، بيانات وهمية بالكامل (ما فيه أي بيانات حقيقية).
+"""اختبارات Kifaya — ملف واحد، بيانات وهمية بالكامل (ما فيه أي بيانات حقيقية).
 
 التشغيل:  python3 run_tests.py path/to/index.html
 يحتاج:    pip install playwright  (ومتصفح Chromium)
@@ -29,6 +29,10 @@ def check(name, cond, detail=''):
 
 # ---------- بيانات وهمية أساسية ----------
 BASE = """()=>{
+  // مستخدم بهيكل اللوحة القديم (بدون أسئلة البداية)
+  S.onb='done';onbClose();delete S.onbBanks;
+  S.pays=DEFAULT_PAYS.map(p=>({...p}));S.cats=DEFAULT_CATS.map(c=>({...c}));
+  M().lines=DEFAULT_LINES.map(l=>({...l}));M().assets=DEFAULT_ASSETS.map(a=>({...a}));initAuto();
   const P=id=>S.pays.find(p=>p.id===id);
   P('credit').name='الائتمانية 1111'; P('mada').name='مدى 2222';
   S.cfg={own:'مختبر,TEST USER',fixed:'الوالدة'};
@@ -359,6 +363,75 @@ async def main():
         v = await pg.evaluate("[S.bonus.last,S.bonus.lastBasic,S.bonus.basic,bonusPlanOk(),document.querySelector('.bn-top b').textContent]")
         check('يحفظ الأرقام (والعربي ينقلب) والخطة', v[:4] == [9000, 5000, 5500, True], v)
         check('المتوقع = 1.8 × الأساسي الحالي (≈ 9,900)', '9,900' in v[4], v[4])
+        await ctx.close()
+
+        # 18) أسئلة البداية: مستخدم جديد من الصفر
+        print('١٨) أسئلة البداية')
+        ctx, pg = await fresh(setup=None)
+        v = await pg.evaluate("[S.onb, !document.getElementById('onb').classList.contains('hide'), S.pays.map(p=>p.id).join(','), M().lines.map(l=>l.id).join(','), (S.goals||[]).length]")
+        check('تثبيت جديد: تطلع الأسئلة، وما فيه أي بنود أو أهداف شخصية', v[0] == 'new' and v[1] and 'prepaid' not in v[2] and v[3] == 'card,save' and v[4] == 0, v)
+        nxt = lambda: pg.click('#onbNext')
+        async def fill(k, val):
+            await pg.fill(f'#onb [data-f="{k}"]', val)
+        await nxt(); await nxt()
+        await nxt()
+        check('بدون راتب ما يكمّل', 'اكتب راتبك' in await pg.inner_text('#onbErr'))
+        await fill('salary', '٩٠٠٠'); await fill('day', '27'); await nxt()
+        for k in ['car', 'family', 'bills']:
+            await pg.click(f'#onb [data-fix="{k}"]')
+        for k, a in [('car', '1500'), ('family', '500'), ('bills', '200')]:
+            await pg.fill(f'#onb [data-fx="{k}"]', a)
+        check('مجموع الثابت يتحدّث وأنت تكتب', '2,200' in await pg.inner_text('#onb [data-live="fixTotal"]'))
+        await nxt()
+        check('المقترح 20٪ لأن التزاماته تحت النص', '1,800' in await pg.inner_text('#onb [data-live="recSave"]'))
+        await pg.click('#onb [data-act="useRec"]')
+        await fill('emAmt', '5000')
+        el = await pg.inner_text('#onb [data-live="emLine"]')
+        check('يقارن المجموع بهدف الطوارئ', 'أقل من الهدف' in el, el)
+        await nxt()
+        await fill('goalName', 'زواج'); await fill('goalAmt', '60000'); await fill('goalYear', '2030'); await nxt()
+        await pg.click('#onb [data-mu="pays"][data-v="credit"]'); await pg.click('#onb [data-mu="pays"][data-v="mada"]')
+        await fill('cLimit', '10000'); await fill('cLast', '1234'); await fill('mLast', '5678'); await fill('cCb', '1'); await nxt()
+        check('يتبقى لمصروفك = الراتب − الثابت − الادخار', '5,000' in await pg.inner_text('#onb [data-live="capBox"]'), await pg.inner_text('#onb [data-live="capBox"]'))
+        await fill('bCredit', '10000'); await fill('bAcc', '3000'); await nxt()
+        await pg.click('#onb [data-ch="auto"][data-v="no"]'); await nxt()
+        await pg.click('#onb [data-ch="lock"][data-v="none"]'); await pg.click('#onb [data-ch="backup"][data-v="icloud"]'); await nxt()
+        t = await pg.inner_text('#onbBody')
+        planDaily = int((await pg.inner_text('#onbBody .o-capbox b')).replace(',', ''))
+        check('شاشة «خطتك»: الرقم اليومي ورأي المستشار', 'خطتك جاهزة' in t and planDaily == 3000 // 27 and 'طوارئك أقل من الهدف' in t, [planDaily, t[:300]])
+        await nxt(); await pg.wait_for_timeout(500)
+        v = await pg.evaluate("""JSON.stringify({onb:S.onb,hidden:document.getElementById('onb').classList.contains('hide'),sal:M().salary,day:S.payDay,
+          lines:M().lines.map(l=>[l.id,l.amount]),pays:S.pays.map(p=>p.name),floor:S.balFloor,c:balLive('c'),a:balLive('a'),
+          goals:S.goals.map(g=>[g.id.slice(0,5),g.target]),bills:[catOf('bills').inCap,catOf('bills').noRet],cb:catOf('dining').cb,rajhi:!!payOf('rajhi'),bk:S.bk.pref,emg:M().assets.find(a=>a.id==='emg').val})""")
+        o = json.loads(v)
+        check('الأسئلة تقفل وتتحفظ الخطة', o['onb'] == 'done' and o['hidden'] and o['sal'] == 9000 and o['day'] == 27, o)
+        check('البنود: الثابت + المصروف + الادخار', dict(o['lines']) == {'car': 1500, 'mom': 500, 'bills': 200, 'card': 5000, 'save': 1800}, o['lines'])
+        check('البطاقات بآخر ٤ أرقام والحد = أرضية الائتمانية', o['pays'][:2] == ['الائتمانية 1234', 'مدى 5678'] and o['floor'] == 10000 and o['c'] == 10000 and o['a'] == 3000, o)
+        check('الأهداف: الطوارئ + الزواج', [g[0] for g in o['goals']] == ['g_emg', 'g_177'[:5]] or (o['goals'][0][0] == 'g_emg' and o['goals'][1][1] == 60000), o['goals'])
+        check('الفواتير برّا المصروف (لأنها في الثابت) والكاش باك 1٪', o['bills'] == [False, True] and o['cb'] == 1, o)
+        check('ما انضاف «مدى الراجحي» لأنه ما اختاره', not o['rajhi'], o)
+        check('الطوارئ فيها اللي كتبه', o['emg'] == 5000, o)
+        v = await pg.evaluate("[saveDest(), calPer, document.getElementById('tasks').innerText]")
+        check('الادخار يروح للطوارئ أول', v[0] == 'emg', v)
+        check('رقم «خطتك» = رقم الرئيسية', v[1] == planDaily, [v[1], planDaily])
+        check('تذكير أول نسخة احتياطية', 'نسخة احتياطية' in v[2], v[2])
+        for t in ['month', 'goals', 'settings', 'today']:
+            await pg.evaluate(f"setTab('{t}')"); await pg.wait_for_timeout(150)
+        check('ما فيه أخطاء بعد الأسئلة', not pg._errs and await pg.evaluate('errList(7).length') == 0, [pg._errs, await pg.evaluate('JSON.stringify(errList(7))')])
+        await pg.evaluate("bkSaveFile()"); await pg.wait_for_timeout(400)
+        check('حفظ النسخة في ملف يسجّل وقتها', await pg.evaluate("S.bk.last>0"))
+        await pg.reload(); await pg.wait_for_timeout(900)
+        check('بعد إعادة الفتح ما ترجع الأسئلة', await pg.evaluate("document.getElementById('onb').classList.contains('hide')&&M().salary===9000"))
+        await pg.evaluate("window.ask=async()=>true")
+        await pg.evaluate("document.getElementById('wipeAll').click()"); await pg.wait_for_timeout(1500)
+        check('«احذف كل بياناتي» يرجّع البرنامج من الصفر', await pg.evaluate("S.onb==='new'&&!document.getElementById('onb').classList.contains('hide')&&!localStorage.getItem('tawzee-lock')"))
+        await ctx.close()
+
+        # 18ب) المستخدم القديم ما تطلع له الأسئلة
+        ctx, pg = await fresh(setup=None)
+        await pg.evaluate("(()=>{const o=JSON.parse(JSON.stringify(S));delete o.onb;o.months[o.current].salary=7000;noFlush=true;localStorage.setItem(KEY,JSON.stringify(o))})()")
+        await pg.reload(); await pg.wait_for_timeout(900)
+        check('بيانات موجودة = ما تطلع الأسئلة', await pg.evaluate("S.onb==='done'&&document.getElementById('onb').classList.contains('hide')"))
         await ctx.close()
 
         # 17) صحة النظام وسجل الأخطاء بعد جولة كاملة
